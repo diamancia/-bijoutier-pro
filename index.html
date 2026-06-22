@@ -664,40 +664,7 @@ body {
             <span style="font-size:16px;color:var(--text-muted);">🔍</span>
             <input class="nm-input" style="box-shadow:none;padding:0;background:transparent;" placeholder="Rechercher client, tél..." id="search-input" oninput="filterClients()">
           </div>
-          <div id="clients-list">
-            <div class="client-row" onclick="showClientDetail('Hassan Benjelloun','HB','0661 234 567','Bijouterie Centrale',['12/06','3.5','642','2247'],['05/06','2.0','639','1278'],['28/05','5.0','635','3175'])">
-              <div class="client-avatar">HB</div>
-              <div class="client-info">
-                <div class="client-name">Hassan Benjelloun</div>
-                <div class="client-meta">0661 234 567 · Bijouterie Centrale</div>
-              </div>
-              <div class="client-badge">18 dépôts</div>
-            </div>
-            <div class="client-row" onclick="showClientDetail('Fatima Amrani','FA','0622 890 123','Or et Lumière',['10/06','4.2','641','2692'],['01/06','1.5','638','957'])">
-              <div class="client-avatar" style="background:#8B6914;color:#E8C96A;">FA</div>
-              <div class="client-info">
-                <div class="client-name">Fatima Amrani</div>
-                <div class="client-meta">0622 890 123 · Or et Lumière</div>
-              </div>
-              <div class="client-badge">7 dépôts</div>
-            </div>
-            <div class="client-row" onclick="showClientDetail('Youssef Kettani','YK','0637 456 789','Goldsmith',['15/06','6.0','642','3852'])">
-              <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">YK</div>
-              <div class="client-info">
-                <div class="client-name">Youssef Kettani</div>
-                <div class="client-meta">0637 456 789 · Goldsmith</div>
-              </div>
-              <div class="client-badge">3 dépôts</div>
-            </div>
-            <div class="client-row" onclick="showClientDetail('Meryem Lahlou','ML','0655 321 098','Artisan Or',['14/06','2.8','642','1798'],['08/06','3.2','640','2048'],['02/06','4.0','637','2548'])">
-              <div class="client-avatar" style="background:#3a2a6e;color:#C9A84C;">ML</div>
-              <div class="client-info">
-                <div class="client-name">Meryem Lahlou</div>
-                <div class="client-meta">0655 321 098 · Artisan Or</div>
-              </div>
-              <div class="client-badge">11 dépôts</div>
-            </div>
-          </div>
+          <div id="clients-list"></div>
           <div style="margin-top:10px;">
             <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="showAddClient()">+ Nouveau client</button>
           </div>
@@ -737,19 +704,19 @@ body {
             <p class="section-title">Nouveau client</p>
             <div class="form-group">
               <label class="form-label">Nom complet</label>
-              <input class="nm-input" placeholder="Mohammed El Alami">
+              <input class="nm-input" id="add-client-nom" placeholder="Mohammed El Alami">
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Téléphone</label>
-                <input class="nm-input" placeholder="0600 000 000">
+                <input class="nm-input" id="add-client-tel" placeholder="0600 000 000">
               </div>
               <div class="form-group">
                 <label class="form-label">Bijouterie</label>
-                <input class="nm-input" placeholder="Nom boutique">
+                <input class="nm-input" id="add-client-bijouterie" placeholder="Nom boutique">
               </div>
             </div>
-            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;">Enregistrer</button>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;" onclick="submitAddClient()">Enregistrer</button>
           </div>
         </div>
       </div>
@@ -1236,6 +1203,9 @@ BijoutierStore.init(SEED_DATA);
 // La valorisation "Mon Trésor" se recalcule automatiquement à chaque nouveau cours validé
 BijoutierStore.on('coursOr:added', () => { if (typeof renderTresor === 'function') renderTresor(); });
 
+renderClientsListe();
+
+
 let COURS_ACTIF = 642;
 let isOffline = false;
 
@@ -1392,46 +1362,85 @@ function saveCaisseSnap() {
   document.getElementById('caisse-snaps').prepend(snap);
 }
 
-function showClientDetail(name, initials, phone, shop, ...depots) {
+// ─── Module Clients (renderer : lit via ClientService/StockService, n'écrit jamais directement) ───
+function clientInitiales(nom) {
+  return (nom || '?').split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+}
+
+function renderClientsListe(filtre) {
+  const cont = document.getElementById('clients-list');
+  if (!cont) return;
+  const list = filtre ? ClientService.rechercher(filtre) : ClientService.getAll();
+  cont.innerHTML = list.length ? list.map(c => {
+    const nbCommandes = ClientService.getCommandes(c.id).length;
+    return `<div class="client-row" onclick="showClientDetail('${c.id}')">
+      <div class="client-avatar">${clientInitiales(c.nom)}</div>
+      <div class="client-info">
+        <div class="client-name">${c.nom}</div>
+        <div class="client-meta">${c.telephone || ''} · ${c.bijouterie || ''}</div>
+      </div>
+      <div class="client-badge">${nbCommandes} commande${nbCommandes !== 1 ? 's' : ''}</div>
+    </div>`;
+  }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun client</p>';
+}
+
+function showClientDetail(clientId) {
+  const client = ClientService.getById(clientId);
+  if (!client) return;
   document.getElementById('client-list-view').classList.add('hidden');
   document.getElementById('add-client-view').classList.add('hidden');
   document.getElementById('client-detail-view').classList.remove('hidden');
-  document.getElementById('det-avatar').textContent = initials;
-  document.getElementById('det-name').textContent = name;
-  document.getElementById('det-phone').textContent = phone;
-  document.getElementById('det-shop').textContent = shop;
+
+  document.getElementById('det-avatar').textContent = clientInitiales(client.nom);
+  document.getElementById('det-name').textContent = client.nom;
+  document.getElementById('det-phone').textContent = client.telephone || '—';
+  document.getElementById('det-shop').textContent = client.bijouterie || '—';
+
+  const depots = BijoutierStore.query('stock_client', m => m.client_id === clientId && m.type === 'depot_client')
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
   let totalG = 0, totalMad = 0;
   const cont = document.getElementById('det-depots');
-  cont.innerHTML = '';
-  depots.forEach((d, i) => {
-    const [date, g, cours, mad] = d;
-    totalG += parseFloat(g);
-    totalMad += parseInt(mad);
+  cont.innerHTML = depots.length ? depots.map((d, i) => {
+    totalG += d.poids_g;
+    const mad = d.poids_g * (d.cours_applique || 0);
+    totalMad += mad;
     const prev = depots[i + 1];
-    const diff = prev ? parseInt(cours) - parseInt(prev[2]) : null;
-    const varHtml = diff !== null ? (diff > 0 ? `<span class="variation var-up">▲ +${diff}</span>` : `<span class="variation var-down">▼ ${diff}</span>`) : '';
-    cont.innerHTML += `<div class="depot-row"><div><span class="depot-date">${date}</span> · <span class="depot-amount">${g}g</span></div><div style="font-size:11px;color:var(--text-muted);">${cours} MAD/g ${varHtml}</div><div class="depot-mad">${parseInt(mad).toLocaleString('fr-MA')} MAD</div></div>`;
-  });
+    const diff = prev && d.cours_applique && prev.cours_applique ? d.cours_applique - prev.cours_applique : null;
+    const varHtml = diff ? (diff > 0 ? `<span class="variation var-up">▲ +${diff}</span>` : `<span class="variation var-down">▼ ${diff}</span>`) : '';
+    return `<div class="depot-row"><div><span class="depot-date">${d.date}</span> · <span class="depot-amount">${d.poids_g}g</span></div><div style="font-size:11px;color:var(--text-muted);">${d.cours_applique || '—'} MAD/g ${varHtml}</div><div class="depot-mad">${mad.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div></div>`;
+  }).join('') : '<p class="text-muted">Aucun dépôt enregistré</p>';
+
   document.getElementById('det-total-g').textContent = totalG.toFixed(1) + 'g';
-  document.getElementById('det-total-mad').textContent = totalMad.toLocaleString('fr-MA');
+  document.getElementById('det-total-mad').textContent = totalMad.toLocaleString('fr-MA', { maximumFractionDigits: 0 });
 }
 
 function backToClients() {
   document.getElementById('client-list-view').classList.remove('hidden');
   document.getElementById('client-detail-view').classList.add('hidden');
   document.getElementById('add-client-view').classList.add('hidden');
+  renderClientsListe();
 }
 
 function showAddClient() {
   document.getElementById('client-list-view').classList.add('hidden');
   document.getElementById('add-client-view').classList.remove('hidden');
+  document.getElementById('add-client-nom').value = '';
+  document.getElementById('add-client-tel').value = '';
+  document.getElementById('add-client-bijouterie').value = '';
+}
+
+function submitAddClient() {
+  const nom = document.getElementById('add-client-nom').value.trim();
+  const telephone = document.getElementById('add-client-tel').value.trim();
+  const bijouterie = document.getElementById('add-client-bijouterie').value.trim();
+  if (!nom) { alert('Le nom est obligatoire'); return; }
+  ClientService.ajouter({ nom, telephone, bijouterie });
+  backToClients();
 }
 
 function filterClients() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  document.querySelectorAll('.client-row').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
+  renderClientsListe(document.getElementById('search-input').value);
 }
 
 // ─── Module Commandes (renderer : lit via CommandeService/ClientService, n'écrit jamais directement) ───

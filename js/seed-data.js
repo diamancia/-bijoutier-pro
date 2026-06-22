@@ -48,14 +48,14 @@ const SEED_DATA = {
 
   stock: {
     propre: [
-      { id: 'stp_001', type: 'entree_propre', poids_g: 45.0, purete: '24K', source: 'Achat Al Waha', date: '2026-06-19', notes: 'Stock principal' },
-      { id: 'stp_002', type: 'balayure', poids_g: 8.2, purete: '24K', source: 'Balayure incinération', date: '2026-06-19', notes: 'Récupéré atelier' },
+      { id: 'stp_001', type: 'entree_propre', poids_g: 45.0, purete: '24K', source: 'Achat Al Waha', date: '2026-06-19', created_at: '2026-06-19T08:00:00Z', notes: 'Stock principal' },
+      { id: 'stp_002', type: 'balayure', poids_g: 8.2, purete: '24K', source: 'Balayure incinération', date: '2026-06-19', created_at: '2026-06-19T09:10:00Z', notes: 'Récupéré atelier' },
     ],
     client: [
-      { id: 'stc_001', type: 'depot_client', client_id: 'cli_001', commande_id: 'cmd_001', poids_g: 3.5, purete: '18K', date_depot: '2026-06-12', date_sortie: null },
-      { id: 'stc_002', type: 'depot_client', client_id: 'cli_002', commande_id: 'cmd_002', poids_g: 4.2, purete: '18K', date_depot: '2026-06-10', date_sortie: null },
-      { id: 'stc_003', type: 'depot_client', client_id: 'cli_003', commande_id: 'cmd_003', poids_g: 6.0, purete: '18K', date_depot: '2026-06-15', date_sortie: null },
-      { id: 'stc_004', type: 'depot_client', client_id: 'cli_004', commande_id: 'cmd_006', poids_g: 2.8, purete: '18K', date_depot: '2026-06-14', date_sortie: null },
+      { id: 'stc_001', type: 'depot_client', client_id: 'cli_001', commande_id: 'cmd_001', poids_g: 3.5, purete: '18K', cours_applique: 642, date: '2026-06-12', created_at: '2026-06-12T09:15:00Z' },
+      { id: 'stc_002', type: 'depot_client', client_id: 'cli_002', commande_id: 'cmd_002', poids_g: 4.2, purete: '18K', cours_applique: 641, date: '2026-06-10', created_at: '2026-06-10T10:00:00Z' },
+      { id: 'stc_003', type: 'depot_client', client_id: 'cli_003', commande_id: 'cmd_003', poids_g: 6.0, purete: '18K', cours_applique: 642, date: '2026-06-15', created_at: '2026-06-15T11:00:00Z' },
+      { id: 'stc_004', type: 'depot_client', client_id: 'cli_004', commande_id: 'cmd_006', poids_g: 2.8, purete: '18K', cours_applique: 642, date: '2026-06-14', created_at: '2026-06-14T10:30:00Z' },
     ],
     atelier: [
       { id: 'ate_001', type: 'entree_coffre_achat', categorie: 'atelier', poids_g: 60.0, purete: '24K', piece_id: null, artisan_id: null, poids_perte_g: null, source: 'Achat or Al Waha', cours_applique: 642, date: '2026-06-19', notes: '' },
