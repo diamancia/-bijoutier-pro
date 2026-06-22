@@ -9,8 +9,8 @@
  */
 
 const SUPABASE_CONFIG = {
-  url: 'https://VOTRE_PROJET.supabase.co',     // ← remplacer
-  anonKey: 'VOTRE_CLE_ANON_ICI',               // ← remplacer
+  url: 'https://aucnhtbmdlalplkjggkm.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y25odGJtZGxhbHBsa2pnZ2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDk4MDcsImV4cCI6MjA5NzYyNTgwN30.-fOypb_iL_sTosnyo0GZXnxQLUfKzkfe7zzzUofnRbY',
 };
 
 // ─── Client Supabase ───
