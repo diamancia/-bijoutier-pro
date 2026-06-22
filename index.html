@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bijoutier Pro</title>
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C96A;
+  --gold-dark: #8B6914;
+  --nm-bg: #e8e5de;
+  --nm-bg-dark: #1e1c18;
+  --accent: #C9A84C;
+  --danger: #c0392b;
+  --success: #1a7a4a;
+  --text: #2c2820;
+  --text-muted: #6b6358;
+  --border-r: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1a1713;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.phone-shell {
+  width: 375px;
+  min-height: 820px;
+  background: var(--nm-bg);
+  border-radius: 40px;
+  border: 8px solid #2c2820;
+  box-shadow: 6px 6px 16px #b8b5ae, -6px -6px 16px #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dark .phone-shell {
+  background: var(--nm-bg-dark);
+  box-shadow: 6px 6px 16px #0a0908, -6px -6px 16px #2e2b24;
+}
+
+.dark { --nm-bg: #1e1c18; --text: #e8e5de; --text-muted: #9a9080; }
+
+.status-bar {
+  background: #1a1713;
+  color: #C9A84C;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #1a1713 0%, #2c2820 100%);
+  padding: 12px 20px 16px;
+  flex-shrink: 0;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.app-logo { display: flex; align-items: center; gap: 8px; }
+
+.logo-icon {
+  width: 32px; height: 32px;
+  background: var(--gold);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.app-name { font-size: 18px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; }
+
+.theme-toggle {
+  width: 36px; height: 20px;
+  background: #3a352c;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  border: none;
+  transition: background 0.3s;
+}
+.theme-toggle::after {
+  content: '';
+  width: 16px; height: 16px;
+  background: var(--gold);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: transform 0.3s;
+}
+.dark .theme-toggle { background: #C9A84C; }
+.dark .theme-toggle::after { transform: translateX(16px); background: #1a1713; }
+
+.gold-ticker {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #C9A84C;
+}
+.ticker-val { font-weight: 600; font-size: 14px; }
+.ticker-change { color: #1a7a4a; font-size: 11px; }
+
+.content-area {
+  flex: 1; overflow-y: auto; padding: 12px;
+  scrollbar-width: none;
+}
+.content-area::-webkit-scrollbar { display: none; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.nm-card {
+  background: var(--nm-bg);
+  border-radius: var(--border-r);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.12), -4px -4px 10px rgba(255,255,255,0.7);
+}
+.dark .nm-card {
+  box-shadow: 4px 4px 10px #0a0908, -4px -4px 10px #2e2b24;
+}
+
+.nm-inset {
+  background: var(--nm-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: inset 3px 3px 7px rgba(0,0,0,0.1), inset -3px -3px 7px rgba(255,255,255,0.7);
+}
+.dark .nm-inset {
+  box-shadow: inset 3px 3px 7px #0a0908, inset -3px -3px 7px #2e2b24;
+}
+
+.section-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-size: 14px; font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.text-muted { font-size: 12px; color: var(--text-muted); }
+
+.nm-btn {
+  background: var(--nm-bg);
+  border: none; border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.1), -3px -3px 7px rgba(255,255,255,0.7);
+  color: var(--text);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.dark .nm-btn {
+  box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24;
+  color: #e8e5de;
+}
+.nm-btn:active {
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
+}
+.nm-btn-gold {
+  background: var(--gold);
+  color: #1a1713;
+  box-shadow: 3px 3px 7px #8B6914, -3px -3px 7px #E8C96A;
+}
+
+.nm-input {
+  width: 100%;
+  background: var(--nm-bg);
+  border: none; border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px; color: var(--text);
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
+  outline: none;
+  font-family: inherit;
+}
+.dark .nm-input {
+  color: #e8e5de;
+  box-shadow: inset 2px 2px 5px #0a0908, inset -2px -2px 5px #2e2b24;
+}
+
+.nm-select {
+  width: 100%;
+  background: var(--nm-bg);
+  border: none; border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px; color: var(--text);
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
+  outline: none; appearance: none;
+  font-family: inherit;
+}
+.dark .nm-select {
+  color: #e8e5de;
+  box-shadow: inset 2px 2px 5px #0a0908, inset -2px -2px 5px #2e2b24;
+}
+
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+
+.stat-box {
+  background: var(--nm-bg);
+  border-radius: 10px; padding: 10px;
+  text-align: center;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.1), -3px -3px 7px rgba(255,255,255,0.7);
+}
+.dark .stat-box { box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24; }
+
+.stat-val { font-size: 18px; font-weight: 600; color: var(--gold); }
+.stat-lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.form-group { margin-bottom: 8px; }
+.form-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: block; }
+
+.filter-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+
+.filter-tab {
+  flex: 1; text-align: center;
+  padding: 6px 0; font-size: 11px; font-weight: 500;
+  border-radius: 8px; cursor: pointer;
+  background: var(--nm-bg); color: var(--text-muted);
+  box-shadow: 3px 3px 6px rgba(0,0,0,0.1), -3px -3px 6px rgba(255,255,255,0.7);
+  border: none; font-family: inherit; transition: all 0.2s;
+}
+.dark .filter-tab { color: #9a9080; box-shadow: 3px 3px 6px #0a0908, -3px -3px 6px #2e2b24; }
+.filter-tab.active {
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
+  color: var(--gold);
+}
+.dark .filter-tab.active { box-shadow: inset 2px 2px 5px #0a0908, inset -2px -2px 5px #2e2b24; }
+
+.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin: 10px 0; }
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+.bar-gold { background: var(--gold); border-radius: 3px 3px 0 0; width: 100%; transition: height 0.4s; }
+.bar-pur { background: #8B6914; border-radius: 3px 3px 0 0; width: 60%; transition: height 0.4s; }
+.bar-lbl { font-size: 9px; color: var(--text-muted); }
+
+.client-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer;
+}
+.dark .client-row { border-bottom-color: rgba(255,255,255,0.06); }
+
+.client-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #1a1713;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -2px -2px 5px rgba(255,255,255,0.7);
+}
+.dark .client-avatar { box-shadow: 2px 2px 5px #0a0908, -2px -2px 5px #2e2b24; }
+
+.client-info { flex: 1; }
+.client-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.client-meta { font-size: 11px; color: var(--text-muted); }
+.client-badge { font-size: 10px; background: rgba(201,168,76,0.15); color: var(--gold-dark); border-radius: 6px; padding: 2px 7px; font-weight: 500; }
+
+.gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gallery-item {
+  border-radius: 10px; overflow: hidden;
+  cursor: pointer;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.12), -3px -3px 7px rgba(255,255,255,0.7);
+  position: relative;
+}
+.dark .gallery-item { box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24; }
+.gallery-item:nth-child(2n) { margin-top: 16px; }
+
+.gallery-img-placeholder {
+  width: 100%; aspect-ratio: 3/4;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px; font-size: 28px;
+}
+.gallery-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(26,23,19,0.85));
+  padding: 20px 8px 8px;
+}
+.gallery-tag { font-size: 10px; color: var(--gold); font-weight: 600; }
+.gallery-weight { font-size: 12px; color: #fff; font-weight: 500; }
+
+.depot-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 12px;
+}
+.dark .depot-row { border-bottom-color: rgba(255,255,255,0.05); }
+
+.depot-date { color: var(--text-muted); }
+.depot-amount { font-weight: 500; color: var(--text); }
+.depot-mad { color: var(--gold); font-weight: 600; }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.chip-gold { background: rgba(201,168,76,0.15); color: var(--gold-dark); }
+.chip-green { background: rgba(26,122,74,0.12); color: var(--success); }
+.chip-red { background: rgba(192,57,43,0.12); color: var(--danger); }
+
+.arch-node {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; margin-bottom: 8px;
+  background: var(--nm-bg);
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.1), -3px -3px 7px rgba(255,255,255,0.7);
+}
+.dark .arch-node { box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24; }
+
+.arch-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.arch-arrow { text-align: center; color: var(--gold); font-size: 18px; margin: -4px 0; }
+
+.sync-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.dark .sync-row { border-bottom-color: rgba(255,255,255,0.05); }
+
+.sync-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+.sync-dot.offline { background: var(--danger); animation: none; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+
+.nm-toggle {
+  width: 42px; height: 24px; border-radius: 12px;
+  background: #ccc; border: none; cursor: pointer;
+  position: relative; transition: background 0.3s;
+}
+.nm-toggle.on { background: var(--gold); }
+.nm-toggle::after {
+  content: ''; width: 18px; height: 18px;
+  background: white; border-radius: 50%;
+  position: absolute; top: 3px; left: 3px;
+  transition: transform 0.3s;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+.nm-toggle.on::after { transform: translateX(18px); }
+
+.bottom-nav {
+  background: var(--nm-bg);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex; align-items: stretch;
+  flex-shrink: 0;
+  box-shadow: 0 -3px 10px rgba(0,0,0,0.06);
+}
+.dark .bottom-nav { border-top-color: rgba(255,255,255,0.06); }
+
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 0 14px; cursor: pointer;
+  border: none; background: transparent;
+  gap: 3px; font-family: inherit; transition: all 0.2s;
+}
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.2s; }
+.nav-item.active .nav-label { color: var(--gold); }
+.nav-pill { width: 4px; height: 4px; border-radius: 2px; background: var(--gold); margin-top: 2px; }
+
+.sub-tabs {
+  display: flex; gap: 6px; margin-bottom: 12px;
+  overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+}
+.sub-tabs::-webkit-scrollbar { display: none; }
+
+.sub-tab {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; white-space: nowrap;
+  border: none; font-family: inherit;
+  background: var(--nm-bg); color: var(--text-muted);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -2px -2px 5px rgba(255,255,255,0.7);
+  transition: all 0.2s;
+}
+.dark .sub-tab { color: #9a9080; box-shadow: 2px 2px 5px #0a0908, -2px -2px 5px #2e2b24; }
+.sub-tab.active {
+  background: var(--gold); color: #1a1713;
+  box-shadow: 2px 2px 5px #8B6914, -2px -2px 5px #E8C96A;
+}
+
+.cours-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.dark .cours-entry { border-bottom-color: rgba(255,255,255,0.05); }
+.cours-date { font-size: 11px; color: var(--text-muted); }
+.cours-val { font-size: 15px; font-weight: 600; color: var(--gold); }
+.cours-qty { font-size: 11px; color: var(--text-muted); }
+.cours-check { width: 20px; height: 20px; border-radius: 6px; background: rgba(26,122,74,0.15); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+.purity-bar { height: 8px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+.dark .purity-bar { background: rgba(255,255,255,0.08); }
+.purity-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.5s; }
+
+.caisse-snap {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: var(--nm-bg);
+  border-radius: 10px; margin-bottom: 6px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -2px -2px 5px rgba(255,255,255,0.7);
+}
+.dark .caisse-snap { box-shadow: 2px 2px 5px #0a0908, -2px -2px 5px #2e2b24; }
+.snap-time { font-size: 11px; color: var(--text-muted); }
+.snap-val { font-size: 13px; font-weight: 500; color: var(--gold); }
+.snap-type { font-size: 10px; color: var(--text-muted); }
+
+.variation { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 500; }
+.var-up { color: var(--success); }
+.var-down { color: var(--danger); }
+
+.client-detail-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.client-detail-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 600; color: #1a1713;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.1), -3px -3px 7px rgba(255,255,255,0.7);
+  flex-shrink: 0;
+}
+.dark .client-detail-avatar { box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24; }
+
+.hidden { display: none !important; }
+
+.search-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+
+.caisse-big { text-align: center; padding: 16px 0; }
+.caisse-cours-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.caisse-cours-val { font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; }
+.caisse-cours-unit { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="phone-shell">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span style="color:#C9A84C;font-size:12px;">⬤ 5G</span>
+    <span>🔋 87%</span>
+  </div>
+
+  <div class="app-header">
+    <div class="header-top">
+      <div class="app-logo">
+        <div class="logo-icon">💎</div>
+        <span class="app-name">Bijoutier Pro</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button id="offline-btn" onclick="toggleOffline()" style="display:flex;align-items:center;gap:5px;background:rgba(26,122,74,0.18);border:none;border-radius:20px;padding:5px 10px;cursor:pointer;font-family:inherit;transition:all 0.3s;">
+          <span id="offline-dot" style="width:7px;height:7px;border-radius:50%;background:#1a7a4a;display:inline-block;animation:pulse 2s infinite;"></span>
+          <span id="offline-label" style="font-size:11px;font-weight:500;color:#1a7a4a;">En ligne</span>
+        </button>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Basculer thème"></button>
+      </div>
+    </div>
+    <div class="gold-ticker">
+      <span>Or 24K —</span>
+      <span class="ticker-val" id="ticker-cours">642 MAD/g</span>
+      <span class="ticker-change" id="ticker-change">▲ +1.2%</span>
+      <span style="margin-left:auto;font-size:10px;color:#9a9080;" id="ticker-date">19/06/2026</span>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <!-- TAB DASHBOARD -->
+    <div class="tab-content active" id="tab-dashboard">
+      <p class="section-title">Aujourd'hui · 19 juin 2026</p>
+
+      <!-- Statut connexion -->
+      <div class="nm-card" style="padding:12px 14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div id="dash-dot" style="width:10px;height:10px;border-radius:50%;background:#1a7a4a;animation:pulse 2s infinite;flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);" id="dash-conn-label">Connecté · Supabase actif</div>
+              <div style="font-size:11px;color:var(--text-muted);">Dernière sync 08:32</div>
+            </div>
+          </div>
+          <div id="dash-sync-badge" class="chip chip-green">Sync ✓</div>
+        </div>
+      </div>
+
+      <!-- Dépôts du jour -->
+      <div class="nm-card">
+        <p class="section-title">Dépôts du jour</p>
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="stat-val" id="dash-nb-depots">5</div>
+            <div class="stat-lbl">Dépôts clients</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="dash-nb-images">3</div>
+            <div class="stat-lbl">Photos commandes</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="stat-val" id="dash-g-jour">15.3g</div>
+            <div class="stat-lbl">Or reçu (g)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="dash-mad-jour">9 823</div>
+            <div class="stat-lbl">MAD engagés</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activité récente -->
+      <div class="nm-card">
+        <p class="section-title">Activité récente</p>
+        <div id="dash-activity">
+          <div class="depot-row" style="font-size:12px;">
+            <span style="font-size:16px;">⚖️</span>
+            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Balayure enregistrée</span><br><span class="text-muted">8.2g 24K récupéré · Incinération</span></div>
+            <span class="text-muted">09:10</span>
+          </div>
+          <div class="depot-row" style="font-size:12px;">
+            <span style="font-size:16px;">👤</span>
+            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Dépôt Hassan Benjelloun</span><br><span class="text-muted">3.5g · 2 247 MAD</span></div>
+            <span class="text-muted">09:15</span>
+          </div>
+          <div class="depot-row" style="font-size:12px;">
+            <span style="font-size:16px;">📸</span>
+            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Photo commande ajoutée</span><br><span class="text-muted">Bague · Youssef Kettani</span></div>
+            <span class="text-muted">10:02</span>
+          </div>
+          <div class="depot-row" style="font-size:12px;">
+            <span style="font-size:16px;">💰</span>
+            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Snapshot caisse</span><br><span class="text-muted">Vente bijou · 5.2g · 3 338 MAD</span></div>
+            <span class="text-muted">11:42</span>
+          </div>
+          <div class="depot-row" style="font-size:12px;border:none;">
+            <span style="font-size:16px;">🔁</span>
+            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Raffinage effectué</span><br><span class="text-muted">10g 24K → 13.3g 18K</span></div>
+            <span class="text-muted">14:20</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- File hors-ligne -->
+      <div class="nm-card" id="dash-offline-card" style="display:none;">
+        <p class="section-title">En attente de sync</p>
+        <div class="sync-row">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="sync-dot"></div>
+            <span style="font-size:12px;color:var(--text);">3 dépôts non envoyés</span>
+          </div>
+          <span class="chip chip-red">Hors ligne</span>
+        </div>
+        <div class="sync-row" style="border:none;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="sync-dot"></div>
+            <span style="font-size:12px;color:var(--text);">2 images en attente</span>
+          </div>
+          <span class="chip chip-red">Upload</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB ADMIN (anciens Arch + Réseau fusionnés, accès admin) -->
+    <div class="tab-content" id="tab-admin">
+      <p class="section-title">Administration</p>
+
+      <div class="arch-node">
+        <div class="arch-icon" style="background:rgba(201,168,76,0.15);">📱</div>
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">Client mobile</div>
+          <div class="text-muted">PWA · Neumorphisme · IndexedDB</div>
+        </div>
+        <div class="chip chip-green">Actif</div>
+      </div>
+      <div class="arch-arrow">↕</div>
+      <div class="arch-node">
+        <div class="arch-icon" style="background:rgba(26,122,74,0.12);">⚙️</div>
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">Middleware API</div>
+          <div class="text-muted">REST + WebSocket · JWT · Redis</div>
+        </div>
+        <div class="chip chip-green">Actif</div>
+      </div>
+      <div class="arch-arrow">↕</div>
+      <div class="arch-node">
+        <div class="arch-icon" style="background:rgba(59,130,246,0.12);">🗄️</div>
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">Supabase</div>
+          <div class="text-muted">PostgreSQL · Realtime · RLS</div>
+        </div>
+        <div class="chip chip-green">Connecté</div>
+      </div>
+
+      <div class="nm-card" style="margin-top:12px;">
+        <p class="section-title">Synchronisation</p>
+        <div class="toggle-row">
+          <div><div class="card-title">Sync automatique</div><div class="text-muted">Au retour de connexion</div></div>
+          <button class="nm-toggle on" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="toggle-row">
+          <div><div class="card-title">Notifications sync</div><div class="text-muted">Alertes push</div></div>
+          <button class="nm-toggle" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="stat-row" style="margin-top:8px;">
+          <div class="stat-box"><div class="stat-val">98%</div><div class="stat-lbl">Cache local</div></div>
+          <div class="stat-box"><div class="stat-val">4</div><div class="stat-lbl">En attente</div></div>
+        </div>
+      </div>
+
+      <div class="nm-card">
+        <p class="section-title">Tables Supabase</p>
+        <div style="font-size:11px;color:var(--text-muted);line-height:2.2;">
+          cours_or &nbsp;·&nbsp; clients &nbsp;·&nbsp; depots<br>
+          balayures &nbsp;·&nbsp; raffinage &nbsp;·&nbsp; articles<br>
+          commandes &nbsp;·&nbsp; caisse_snapshots &nbsp;·&nbsp; cours_historique
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB BASE -->
+    <div class="tab-content" id="tab-base">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchSubTab('clients', this)">Clients</button>
+        <button class="sub-tab" onclick="switchSubTab('articles', this)">Articles</button>
+        <button class="sub-tab" onclick="switchSubTab('galerie', this)">Galerie</button>
+      </div>
+
+      <div id="sub-clients">
+        <div id="client-list-view">
+          <div class="search-bar nm-inset" style="padding:8px 12px;">
+            <span style="font-size:16px;color:var(--text-muted);">🔍</span>
+            <input class="nm-input" style="box-shadow:none;padding:0;background:transparent;" placeholder="Rechercher client, tél..." id="search-input" oninput="filterClients()">
+          </div>
+          <div id="clients-list">
+            <div class="client-row" onclick="showClientDetail('Hassan Benjelloun','HB','0661 234 567','Bijouterie Centrale',['12/06','3.5','642','2247'],['05/06','2.0','639','1278'],['28/05','5.0','635','3175'])">
+              <div class="client-avatar">HB</div>
+              <div class="client-info">
+                <div class="client-name">Hassan Benjelloun</div>
+                <div class="client-meta">0661 234 567 · Bijouterie Centrale</div>
+              </div>
+              <div class="client-badge">18 dépôts</div>
+            </div>
+            <div class="client-row" onclick="showClientDetail('Fatima Amrani','FA','0622 890 123','Or et Lumière',['10/06','4.2','641','2692'],['01/06','1.5','638','957'])">
+              <div class="client-avatar" style="background:#8B6914;color:#E8C96A;">FA</div>
+              <div class="client-info">
+                <div class="client-name">Fatima Amrani</div>
+                <div class="client-meta">0622 890 123 · Or et Lumière</div>
+              </div>
+              <div class="client-badge">7 dépôts</div>
+            </div>
+            <div class="client-row" onclick="showClientDetail('Youssef Kettani','YK','0637 456 789','Goldsmith',['15/06','6.0','642','3852'])">
+              <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">YK</div>
+              <div class="client-info">
+                <div class="client-name">Youssef Kettani</div>
+                <div class="client-meta">0637 456 789 · Goldsmith</div>
+              </div>
+              <div class="client-badge">3 dépôts</div>
+            </div>
+            <div class="client-row" onclick="showClientDetail('Meryem Lahlou','ML','0655 321 098','Artisan Or',['14/06','2.8','642','1798'],['08/06','3.2','640','2048'],['02/06','4.0','637','2548'])">
+              <div class="client-avatar" style="background:#3a2a6e;color:#C9A84C;">ML</div>
+              <div class="client-info">
+                <div class="client-name">Meryem Lahlou</div>
+                <div class="client-meta">0655 321 098 · Artisan Or</div>
+              </div>
+              <div class="client-badge">11 dépôts</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="showAddClient()">+ Nouveau client</button>
+          </div>
+        </div>
+
+        <div id="client-detail-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToClients()">← Retour</button>
+          <div class="nm-card">
+            <div class="client-detail-header">
+              <div class="client-detail-avatar" id="det-avatar">HB</div>
+              <div>
+                <div class="card-title" id="det-name">Hassan Benjelloun</div>
+                <div class="text-muted" id="det-phone">0661 234 567</div>
+                <div class="text-muted" id="det-shop">Bijouterie Centrale</div>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-box">
+                <div class="stat-val" id="det-total-g">—</div>
+                <div class="stat-lbl">Total (g)</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-val" id="det-total-mad">—</div>
+                <div class="stat-lbl">Total MAD</div>
+              </div>
+            </div>
+          </div>
+          <div class="nm-card">
+            <p class="section-title">Historique dépôts</p>
+            <div id="det-depots"></div>
+          </div>
+        </div>
+
+        <div id="add-client-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToClients()">← Retour</button>
+          <div class="nm-card">
+            <p class="section-title">Nouveau client</p>
+            <div class="form-group">
+              <label class="form-label">Nom complet</label>
+              <input class="nm-input" placeholder="Mohammed El Alami">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input class="nm-input" placeholder="0600 000 000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bijouterie</label>
+                <input class="nm-input" placeholder="Nom boutique">
+              </div>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sub-articles" class="hidden">
+        <div class="nm-card">
+          <p class="section-title">Nouvel article</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Poids or (g)</label>
+              <input class="nm-input" placeholder="3.2" type="number">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Taille</label>
+              <input class="nm-input" placeholder="52">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type de pierres</label>
+            <select class="nm-select">
+              <option>Diamant naturel</option>
+              <option>Zircone</option>
+              <option>Moissanite</option>
+              <option>Synthétiques</option>
+              <option>Naturelles</option>
+              <option>Sans pierres</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Photo</label>
+            <button class="nm-btn" style="width:100%;padding:10px;font-size:12px;">📷 Prendre une photo</button>
+          </div>
+          <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;">Ajouter au catalogue</button>
+        </div>
+        <p class="section-title" style="margin-top:4px;">Catalogue</p>
+        <div class="nm-card" style="padding:10px 12px;">
+          <div class="depot-row" style="font-size:13px;">
+            <div><strong>Bague solitaire</strong><br><span class="text-muted">Diamant · 3.2g · T52</span></div>
+            <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">3.2g</span><br><span class="text-muted">0.3ct</span></div>
+          </div>
+          <div class="depot-row" style="font-size:13px;">
+            <div><strong>Collier 18K</strong><br><span class="text-muted">Zircone · 5.8g · 45cm</span></div>
+            <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">5.8g</span><br><span class="text-muted">Multi</span></div>
+          </div>
+          <div class="depot-row" style="font-size:13px;border:none;">
+            <div><strong>Bracelet jonc</strong><br><span class="text-muted">Sans pierres · 12.5g · 18cm</span></div>
+            <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">12.5g</span><br><span class="text-muted">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sub-galerie" class="hidden">
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#2c2820,#4a3820);">💍</div>
+            <div class="gallery-overlay"><div class="gallery-tag">Diamant</div><div class="gallery-weight">3.2g · T52</div></div>
+          </div>
+          <div class="gallery-item">
+            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#1a1713,#3a2a10);">📿</div>
+            <div class="gallery-overlay"><div class="gallery-tag">Zircone</div><div class="gallery-weight">5.8g · 45cm</div></div>
+          </div>
+          <div class="gallery-item">
+            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#2c2010,#4a3510);">⭕</div>
+            <div class="gallery-overlay"><div class="gallery-tag">Sans pierres</div><div class="gallery-weight">12.5g · 18cm</div></div>
+          </div>
+          <div class="gallery-item">
+            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#1a1820,#2c1a3a);">💎</div>
+            <div class="gallery-overlay"><div class="gallery-tag">Moissanite</div><div class="gallery-weight">4.1g · T56</div></div>
+          </div>
+        </div>
+        <button class="nm-btn" style="width:100%;margin-top:12px;padding:10px;font-size:12px;">📷 Ajouter une commande</button>
+      </div>
+    </div>
+
+    <!-- TAB METIER -->
+    <div class="tab-content" id="tab-metier">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchMetierTab('balayures', this)">Balayures</button>
+        <button class="sub-tab" onclick="switchMetierTab('raffinage', this)">Raffinage</button>
+        <button class="sub-tab" onclick="switchMetierTab('cours', this)">Cours or</button>
+        <button class="sub-tab" onclick="switchMetierTab('caisse', this)">Caisse</button>
+      </div>
+
+      <!-- Balayures -->
+      <div id="met-balayures">
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="switchFilter(this)">Incinération</button>
+          <button class="filter-tab" onclick="switchFilter(this)">Fonte</button>
+        </div>
+        <div class="nm-card">
+          <p class="section-title">Saisie traitement</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Poids initial (g)</label>
+              <input class="nm-input" id="bal-initial" type="number" placeholder="100" oninput="calcBalayures()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Après traitement (g)</label>
+              <input class="nm-input" id="bal-traite" type="number" placeholder="12.5" oninput="calcBalayures()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Affinage or pur 24K (g)</label>
+            <input class="nm-input" id="bal-pur" type="number" placeholder="8.2" oninput="calcBalayures()">
+          </div>
+          <div class="nm-inset" style="margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div class="form-label">Valeur 24K récupérée</div>
+                <div class="stat-val" id="bal-valeur-g">— g</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="form-label">≡ MAD (cours actif)</div>
+                <div class="stat-val" id="bal-valeur-mad">— MAD</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="nm-card">
+          <p class="section-title">Comparatif (g)</p>
+          <div class="chart-bars">
+            <div class="chart-bar-wrap">
+              <div class="bar-gold" id="bar-initial" style="height:60px;"></div>
+              <div class="bar-lbl">Initial</div>
+            </div>
+            <div class="chart-bar-wrap">
+              <div class="bar-gold" id="bar-traite" style="height:12px;opacity:0.7;"></div>
+              <div class="bar-lbl">Traité</div>
+            </div>
+            <div class="chart-bar-wrap">
+              <div class="bar-pur" id="bar-pur-bar" style="height:8px;"></div>
+              <div class="bar-lbl">24K pur</div>
+            </div>
+          </div>
+          <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;font-size:12px;" onclick="saveBalayures()">Enregistrer</button>
+        </div>
+      </div>
+
+      <!-- Raffinage -->
+      <div id="met-raffinage" class="hidden">
+        <div class="nm-card">
+          <p class="section-title">Conversion de pureté</p>
+          <div class="form-group">
+            <label class="form-label">Quantité or 24K (g)</label>
+            <input class="nm-input" id="raf-24k" type="number" placeholder="10.0" oninput="calcRaffinage()">
+          </div>
+          <div style="margin:10px 0;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span class="form-label">Or pur 24K</span>
+              <span style="font-size:12px;color:var(--gold);font-weight:500;">100%</span>
+            </div>
+            <div class="purity-bar"><div class="purity-fill" style="width:100%;"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;margin-top:10px;">
+              <span class="form-label">Équivalent 18K</span>
+              <span style="font-size:12px;color:var(--gold);font-weight:500;">75%</span>
+            </div>
+            <div class="purity-bar"><div class="purity-fill" style="width:75%;"></div></div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-box">
+              <div class="stat-val" id="raf-result-g">—</div>
+              <div class="stat-lbl">Quantité 18K (g)</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="raf-result-mad">—</div>
+              <div class="stat-lbl">Valeur MAD</div>
+            </div>
+          </div>
+          <div class="nm-inset" style="margin-top:8px;font-size:12px;color:var(--text-muted);">
+            Qté 18K = Qté 24K × 24/18<br>
+            Valeur = Qté 18K × Cours actif × 0.75
+          </div>
+        </div>
+        <div class="nm-card">
+          <p class="section-title">Historique raffinage</p>
+          <div class="depot-row">
+            <div><span class="text-muted">18/06</span> · 10g 24K → 13.3g 18K</div>
+            <span class="chip chip-gold">6 420 MAD</span>
+          </div>
+          <div class="depot-row" style="border:none;">
+            <div><span class="text-muted">12/06</span> · 5g 24K → 6.7g 18K</div>
+            <span class="chip chip-gold">3 195 MAD</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cours or -->
+      <div id="met-cours" class="hidden">
+        <div class="nm-card">
+          <p class="section-title">Nouveau cours</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input class="nm-input" type="date" id="cours-date" value="2026-06-19">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cours (MAD/g)</label>
+              <input class="nm-input" id="cours-val-input" type="number" placeholder="642" oninput="updateCoursPreview()">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tiers / Vendeur</label>
+              <input class="nm-input" placeholder="Nom vendeur">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quantité 24K (g)</label>
+              <input class="nm-input" id="cours-qty" type="number" placeholder="50" oninput="updateCoursPreview()">
+            </div>
+          </div>
+          <div class="nm-inset" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="form-label">Valeur totale</div>
+              <div class="stat-val" id="cours-preview">— MAD</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="cours-valid" style="width:18px;height:18px;accent-color:var(--gold);">
+              <span style="font-size:12px;font-weight:500;color:var(--text);">Valider</span>
+            </label>
+          </div>
+          <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;margin-top:8px;font-size:12px;" onclick="saveCours()">Définir comme cours actif</button>
+        </div>
+        <div class="nm-card">
+          <p class="section-title">Historique cours</p>
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="switchFilter(this)">7j</button>
+            <button class="filter-tab" onclick="switchFilter(this)">30j</button>
+            <button class="filter-tab" onclick="switchFilter(this)">1 an</button>
+          </div>
+          <div class="cours-entry">
+            <div><div class="cours-date">19/06/2026 · Al Waha</div><div class="cours-qty">50g 24K</div></div>
+            <div class="cours-val">642 MAD/g</div>
+            <div class="cours-check">✅</div>
+          </div>
+          <div class="cours-entry">
+            <div><div class="cours-date">12/06/2026 · Souk central</div><div class="cours-qty">30g 24K</div></div>
+            <div class="cours-val">639 MAD/g</div>
+            <div class="cours-check">✅</div>
+          </div>
+          <div class="cours-entry" style="border:none;">
+            <div><div class="cours-date">05/06/2026 · Négoce Atlas</div><div class="cours-qty">20g 24K</div></div>
+            <div class="cours-val">635 MAD/g</div>
+            <div class="cours-check">✅</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caisse -->
+      <div id="met-caisse" class="hidden">
+        <div class="nm-card">
+          <div class="caisse-big">
+            <div class="caisse-cours-label">Cours actif</div>
+            <div class="caisse-cours-val" id="caisse-cours-display">642</div>
+            <div class="caisse-cours-unit">MAD / gramme 24K</div>
+          </div>
+          <div class="form-row" style="margin-top:8px;">
+            <div class="form-group">
+              <label class="form-label">Type transaction</label>
+              <select class="nm-select" id="caisse-type">
+                <option>Achat or</option>
+                <option>Vente bijou</option>
+                <option>Dépôt client</option>
+                <option>Raffinage</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Montant (g)</label>
+              <input class="nm-input" id="caisse-g" type="number" placeholder="5.0" oninput="calcCaisse()">
+            </div>
+          </div>
+          <div class="nm-inset" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span class="form-label">Montant MAD</span>
+            <span class="stat-val" id="caisse-mad">— MAD</span>
+          </div>
+          <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="saveCaisseSnap()">📸 Enregistrer snapshot</button>
+        </div>
+        <div class="nm-card">
+          <p class="section-title">Snapshots du jour</p>
+          <div id="caisse-snaps">
+            <div class="caisse-snap">
+              <div><div class="snap-time">09:15</div><div class="snap-type">Achat or · 3.5g</div></div>
+              <div class="snap-val">642 MAD/g</div>
+              <div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:var(--text);">2 247 MAD</div></div>
+            </div>
+            <div class="caisse-snap">
+              <div><div class="snap-time">11:42</div><div class="snap-type">Vente bijou · 5.2g</div></div>
+              <div class="snap-val">642 MAD/g</div>
+              <div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:var(--text);">3 338 MAD</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Accueil</span>
+      <div class="nav-pill"></div>
+    </button>
+    <button class="nav-item" id="nav-base" onclick="switchTab('base')">
+      <span class="nav-icon">🗂️</span>
+      <span class="nav-label">Base</span>
+    </button>
+    <button class="nav-item" id="nav-metier" onclick="switchTab('metier')">
+      <span class="nav-icon">⚖️</span>
+      <span class="nav-label">Métier</span>
+    </button>
+    <button class="nav-item" id="nav-admin" onclick="switchTab('admin')">
+      <span class="nav-icon">🔧</span>
+      <span class="nav-label">Admin</span>
+    </button>
+  </div>
+</div>
+</div>
+
+<script>
+let COURS_ACTIF = 642;
+let isOffline = false;
+
+function toggleOffline() {
+  isOffline = !isOffline;
+  const btn = document.getElementById('offline-btn');
+  const dot = document.getElementById('offline-dot');
+  const label = document.getElementById('offline-label');
+  const dashDot = document.getElementById('dash-dot');
+  const dashLabel = document.getElementById('dash-conn-label');
+  const dashBadge = document.getElementById('dash-sync-badge');
+  const offlineCard = document.getElementById('dash-offline-card');
+  if (isOffline) {
+    btn.style.background = 'rgba(192,57,43,0.18)';
+    dot.style.background = '#c0392b'; dot.style.animation = 'none';
+    label.style.color = '#c0392b'; label.textContent = 'Hors ligne';
+    dashDot.style.background = '#c0392b'; dashDot.style.animation = 'none';
+    dashLabel.textContent = 'Hors ligne · Mode local';
+    dashBadge.className = 'chip chip-red'; dashBadge.textContent = '⏳ En attente';
+    offlineCard.style.display = 'block';
+  } else {
+    btn.style.background = 'rgba(26,122,74,0.18)';
+    dot.style.background = '#1a7a4a'; dot.style.animation = 'pulse 2s infinite';
+    label.style.color = '#1a7a4a'; label.textContent = 'En ligne';
+    dashDot.style.background = '#1a7a4a'; dashDot.style.animation = 'pulse 2s infinite';
+    dashLabel.textContent = 'Connecté · Supabase actif';
+    dashBadge.className = 'chip chip-green'; dashBadge.textContent = 'Sync ✓';
+    offlineCard.style.display = 'none';
+  }
+}
+
+function toggleTheme() {
+  document.getElementById('app').classList.toggle('dark');
+  const isDark = document.getElementById('app').classList.contains('dark');
+  const app = document.getElementById('app');
+  if (isDark) {
+    app.style.setProperty('--nm-bg', '#1e1c18');
+    app.style.setProperty('--text', '#e8e5de');
+    app.style.setProperty('--text-muted', '#9a9080');
+  } else {
+    app.style.setProperty('--nm-bg', '#e8e5de');
+    app.style.setProperty('--text', '#2c2820');
+    app.style.setProperty('--text-muted', '#6b6358');
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('active');
+    const pill = n.querySelector('.nav-pill');
+    if (pill) pill.remove();
+  });
+  document.getElementById('tab-' + tab).classList.add('active');
+  const navEl = document.getElementById('nav-' + tab);
+  navEl.classList.add('active');
+  const pill = document.createElement('div');
+  pill.className = 'nav-pill';
+  navEl.appendChild(pill);
+}
+
+function switchSubTab(tab, btn) {
+  ['clients','articles','galerie'].forEach(t => {
+    const el = document.getElementById('sub-' + t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+  });
+  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab === 'clients') backToClients();
+}
+
+function switchMetierTab(tab, btn) {
+  ['balayures','raffinage','cours','caisse'].forEach(t => {
+    const el = document.getElementById('met-' + t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+  });
+  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function switchFilter(btn) {
+  btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleSwitch(btn) { btn.classList.toggle('on'); }
+
+function calcBalayures() {
+  const pur = parseFloat(document.getElementById('bal-pur').value) || 0;
+  const initial = parseFloat(document.getElementById('bal-initial').value) || 0;
+  const traite = parseFloat(document.getElementById('bal-traite').value) || 0;
+  document.getElementById('bal-valeur-g').textContent = pur > 0 ? pur.toFixed(2) + 'g' : '— g';
+  document.getElementById('bal-valeur-mad').textContent = pur > 0 ? (pur * COURS_ACTIF).toLocaleString('fr-MA') + ' MAD' : '— MAD';
+  const maxH = 70;
+  const max = Math.max(initial, 1);
+  document.getElementById('bar-initial').style.height = Math.max(4, (initial / max) * maxH) + 'px';
+  document.getElementById('bar-traite').style.height = Math.max(2, (traite / max) * maxH) + 'px';
+  document.getElementById('bar-pur-bar').style.height = Math.max(2, (pur / max) * maxH) + 'px';
+}
+
+function saveBalayures() {
+  const pur = parseFloat(document.getElementById('bal-pur').value) || 0;
+  if (pur > 0) alert('✅ Balayure enregistrée: ' + pur + 'g 24K → ' + (pur * COURS_ACTIF).toLocaleString('fr-MA') + ' MAD');
+  else alert('Veuillez saisir les données');
+}
+
+function calcRaffinage() {
+  const q24 = parseFloat(document.getElementById('raf-24k').value) || 0;
+  const q18 = q24 * 24 / 18;
+  const mad = q18 * COURS_ACTIF * 0.75;
+  document.getElementById('raf-result-g').textContent = q24 > 0 ? q18.toFixed(2) + 'g' : '—';
+  document.getElementById('raf-result-mad').textContent = q24 > 0 ? mad.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD' : '—';
+}
+
+function updateCoursPreview() {
+  const val = parseFloat(document.getElementById('cours-val-input').value) || 0;
+  const qty = parseFloat(document.getElementById('cours-qty').value) || 0;
+  document.getElementById('cours-preview').textContent = (val > 0 && qty > 0) ? (val * qty).toLocaleString('fr-MA') + ' MAD' : '— MAD';
+}
+
+function saveCours() {
+  const val = parseFloat(document.getElementById('cours-val-input').value) || 0;
+  const valid = document.getElementById('cours-valid').checked;
+  if (!val) { alert('Entrez un cours'); return; }
+  if (!valid) { alert('Veuillez cocher la validation'); return; }
+  COURS_ACTIF = val;
+  document.getElementById('ticker-cours').textContent = val + ' MAD/g';
+  document.getElementById('caisse-cours-display').textContent = val;
+  alert('✅ Cours ' + val + ' MAD/g activé — tous les modules mis à jour');
+}
+
+function calcCaisse() {
+  const g = parseFloat(document.getElementById('caisse-g').value) || 0;
+  document.getElementById('caisse-mad').textContent = g > 0 ? (g * COURS_ACTIF).toLocaleString('fr-MA') + ' MAD' : '— MAD';
+}
+
+function saveCaisseSnap() {
+  const g = parseFloat(document.getElementById('caisse-g').value) || 0;
+  const type = document.getElementById('caisse-type').value;
+  if (!g) { alert('Entrez un montant'); return; }
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const snap = document.createElement('div');
+  snap.className = 'caisse-snap';
+  snap.innerHTML = `<div><div class="snap-time">${h}</div><div class="snap-type">${type} · ${g}g</div></div><div class="snap-val">${COURS_ACTIF} MAD/g</div><div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:var(--text);">${(g * COURS_ACTIF).toLocaleString('fr-MA')} MAD</div></div>`;
+  document.getElementById('caisse-snaps').prepend(snap);
+}
+
+function showClientDetail(name, initials, phone, shop, ...depots) {
+  document.getElementById('client-list-view').classList.add('hidden');
+  document.getElementById('add-client-view').classList.add('hidden');
+  document.getElementById('client-detail-view').classList.remove('hidden');
+  document.getElementById('det-avatar').textContent = initials;
+  document.getElementById('det-name').textContent = name;
+  document.getElementById('det-phone').textContent = phone;
+  document.getElementById('det-shop').textContent = shop;
+  let totalG = 0, totalMad = 0;
+  const cont = document.getElementById('det-depots');
+  cont.innerHTML = '';
+  depots.forEach((d, i) => {
+    const [date, g, cours, mad] = d;
+    totalG += parseFloat(g);
+    totalMad += parseInt(mad);
+    const prev = depots[i + 1];
+    const diff = prev ? parseInt(cours) - parseInt(prev[2]) : null;
+    const varHtml = diff !== null ? (diff > 0 ? `<span class="variation var-up">▲ +${diff}</span>` : `<span class="variation var-down">▼ ${diff}</span>`) : '';
+    cont.innerHTML += `<div class="depot-row"><div><span class="depot-date">${date}</span> · <span class="depot-amount">${g}g</span></div><div style="font-size:11px;color:var(--text-muted);">${cours} MAD/g ${varHtml}</div><div class="depot-mad">${parseInt(mad).toLocaleString('fr-MA')} MAD</div></div>`;
+  });
+  document.getElementById('det-total-g').textContent = totalG.toFixed(1) + 'g';
+  document.getElementById('det-total-mad').textContent = totalMad.toLocaleString('fr-MA');
+}
+
+function backToClients() {
+  document.getElementById('client-list-view').classList.remove('hidden');
+  document.getElementById('client-detail-view').classList.add('hidden');
+  document.getElementById('add-client-view').classList.add('hidden');
+}
+
+function showAddClient() {
+  document.getElementById('client-list-view').classList.add('hidden');
+  document.getElementById('add-client-view').classList.remove('hidden');
+}
+
+function filterClients() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  document.querySelectorAll('.client-row').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
