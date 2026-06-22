@@ -831,9 +831,11 @@ const ArtisanService = {
   },
 
   recevoir(pieceId, artisanId, typeEtape, poidsEntreeG, purete) {
-    return StockService.mouvementer({
+    const mvt = StockService.mouvementer({
       type: 'entree_artisan', categorie: 'atelier', poids_g: poidsEntreeG, purete, piece_id: pieceId, artisan_id: artisanId, source: `Réception ${typeEtape}`,
     });
+    BijoutierStore.update('pieces', pieceId, { statut: 'chez_artisan', localisation_actuelle: 'artisan', artisan_actuel_id: artisanId });
+    return mvt;
   },
 
   // Règle module 6 : sortie = grammes modifiés (±) — gain ou perte selon l'étape (gravure, ajout de matière, etc.)
