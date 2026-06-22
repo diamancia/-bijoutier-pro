@@ -920,6 +920,8 @@ body {
         <button class="sub-tab" onclick="switchMetierTab('raffinage', this)">Raffinage</button>
         <button class="sub-tab" onclick="switchMetierTab('cours', this)">Cours or</button>
         <button class="sub-tab" onclick="switchMetierTab('caisse', this)">Caisse</button>
+        <button class="sub-tab" onclick="switchMetierTab('atelier', this)">Atelier</button>
+        <button class="sub-tab" onclick="switchMetierTab('tresor', this)">Mon Trésor</button>
       </div>
 
       <!-- Balayures -->
@@ -1131,6 +1133,73 @@ body {
           </div>
         </div>
       </div>
+
+      <!-- Atelier (pipeline Coffre → Fonderie → Chef d'atelier → Artisans → Douane → Finition → Sortie) -->
+      <div id="met-atelier" class="hidden">
+        <div id="atelier-list-view">
+          <div class="nm-card" style="padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="section-title" style="margin-bottom:0;">Pipeline atelier</span>
+              <button class="nm-btn" style="font-size:11px;padding:6px 10px;" onclick="actionAcheterOr()">+ Achat or</button>
+            </div>
+          </div>
+          <div id="atelier-pieces-list"></div>
+        </div>
+
+        <div id="atelier-detail-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToAtelierListe()">← Retour</button>
+          <div class="nm-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="card-title" id="atelier-det-type">—</div>
+                <div class="text-muted" id="atelier-det-client">—</div>
+              </div>
+              <div id="atelier-det-badge"></div>
+            </div>
+            <div class="stat-row" style="margin-top:10px;">
+              <div class="stat-box"><div class="stat-val" id="atelier-det-artisan">—</div><div class="stat-lbl">Artisan actuel</div></div>
+            </div>
+          </div>
+          <div class="nm-card">
+            <p class="section-title">Action</p>
+            <div id="atelier-action-zone"></div>
+          </div>
+          <div class="nm-card">
+            <p class="section-title">Historique mouvements</p>
+            <div id="atelier-det-historique"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mon Trésor (stock propre + stock client) -->
+      <div id="met-tresor" class="hidden">
+        <div class="nm-card">
+          <p class="section-title">Résumé global</p>
+          <div class="stat-row">
+            <div class="stat-box"><div class="stat-val" id="tresor-total-propre-g">—</div><div class="stat-lbl">Stock propre (g)</div></div>
+            <div class="stat-box"><div class="stat-val" id="tresor-total-propre-mad">—</div><div class="stat-lbl">Valorisation (MAD)</div></div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-box"><div class="stat-val" id="tresor-total-client-g">—</div><div class="stat-lbl">Stock client (g)</div></div>
+            <div class="stat-box"><div class="stat-val" id="tresor-total-global-g">—</div><div class="stat-lbl">Total global (g)</div></div>
+          </div>
+        </div>
+
+        <div class="nm-card">
+          <p class="section-title">Stock propre — par pureté</p>
+          <div id="tresor-propre-detail"></div>
+        </div>
+
+        <div class="nm-card">
+          <p class="section-title">Stock client</p>
+          <div id="tresor-client-detail"></div>
+        </div>
+
+        <div class="nm-card">
+          <p class="section-title">Historique des mouvements</p>
+          <div id="tresor-historique"></div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1163,6 +1232,9 @@ body {
 <script src="js/services/metier.js"></script>
 <script>
 BijoutierStore.init(SEED_DATA);
+
+// La valorisation "Mon Trésor" se recalcule automatiquement à chaque nouveau cours validé
+BijoutierStore.on('coursOr:added', () => { if (typeof renderTresor === 'function') renderTresor(); });
 
 let COURS_ACTIF = 642;
 let isOffline = false;
@@ -1237,12 +1309,14 @@ function switchSubTab(tab, btn) {
 }
 
 function switchMetierTab(tab, btn) {
-  ['balayures','raffinage','cours','caisse'].forEach(t => {
+  ['balayures','raffinage','cours','caisse','atelier','tresor'].forEach(t => {
     const el = document.getElementById('met-' + t);
     if (el) el.classList.toggle('hidden', t !== tab);
   });
   btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  if (tab === 'atelier') backToAtelierListe();
+  if (tab === 'tresor') renderTresor();
 }
 
 function switchFilter(btn) {
@@ -1287,9 +1361,14 @@ function updateCoursPreview() {
 
 function saveCours() {
   const val = parseFloat(document.getElementById('cours-val-input').value) || 0;
+  const date = document.getElementById('cours-date').value || new Date().toISOString().split('T')[0];
+  const qty = parseFloat(document.getElementById('cours-qty').value) || 0;
   const valid = document.getElementById('cours-valid').checked;
   if (!val) { alert('Entrez un cours'); return; }
   if (!valid) { alert('Veuillez cocher la validation'); return; }
+
+  CoursService.ajouterCours({ date, cours_mad_g: val, vendeur: '', quantite_g: qty, valide: true });
+
   COURS_ACTIF = val;
   document.getElementById('ticker-cours').textContent = val + ' MAD/g';
   document.getElementById('caisse-cours-display').textContent = val;
@@ -1459,6 +1538,275 @@ function livrerCommandeActuelle() {
   if (!_commandeDetailId) return;
   CommandeService.livrer(_commandeDetailId);
   showCommandeDetail(_commandeDetailId);
+}
+
+// ─── Module Atelier (pipeline Coffre → Fonderie → Chef d'atelier → Artisans → Douane → Finition → Sortie) ───
+// Renderer : lit via les Services (CoffreService, FonderieService, ChefAtelierService, ArtisanService,
+// DouaneService, FinitionService, SortieService), n'écrit jamais directement dans le Store.
+const STATUT_LABELS = {
+  creee: 'Créée', au_coffre: 'Au coffre', en_fonderie: 'En fonderie',
+  chez_artisan: 'Chez artisan', en_douane: 'En douane',
+  en_attente_chef_atelier: 'Attente chef atelier', en_finition: 'En finition',
+  finie: 'Finie', livree_client: 'Livrée', retour_coffre_final: 'Retour coffre', annulee: 'Annulée',
+};
+const STATUT_ORDER = ['creee', 'au_coffre', 'en_fonderie', 'chez_artisan', 'en_douane', 'en_attente_chef_atelier', 'en_finition', 'finie', 'livree_client', 'retour_coffre_final', 'annulee'];
+const STATUT_CHIP = {
+  finie: 'chip-green', livree_client: 'chip-green', retour_coffre_final: 'chip-green', annulee: 'chip-red',
+};
+
+let _atelierDetailId = null;
+
+function actionAcheterOr() {
+  const poids = parseFloat(prompt('Poids acheté (g, 24K) :', '50')) || 0;
+  if (poids <= 0) return;
+  CoffreService.acheterOr(poids, '24K', 'Achat manuel', null);
+  alert(`✅ ${poids}g 24K ajoutés au coffre`);
+  renderAtelierListe();
+}
+
+function renderAtelierListe() {
+  const cont = document.getElementById('atelier-pieces-list');
+  if (!cont) return;
+  const pieces = BijoutierStore.getAll('pieces')
+    .filter(p => !['livree_client', 'retour_coffre_final', 'annulee'].includes(p.statut))
+    .sort((a, b) => STATUT_ORDER.indexOf(a.statut) - STATUT_ORDER.indexOf(b.statut));
+
+  if (pieces.length === 0) {
+    cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucune pièce en cours dans l\'atelier</p>';
+    return;
+  }
+  cont.innerHTML = pieces.map(p => {
+    const cmd = CommandeService.getById(p.commande_id);
+    const client = ClientService.getById(p.client_id);
+    return `<div class="client-row" onclick="showAtelierDetail('${p.id}')">
+      <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">${(cmd ? cmd.type : '?').substring(0, 2).toUpperCase()}</div>
+      <div class="client-info">
+        <div class="client-name">${cmd ? cmd.type : '?'} · ${client ? client.nom : '?'}</div>
+        <div class="client-meta">${p.poids_actuel_g}g · ${p.purete}</div>
+      </div>
+      <span class="chip ${STATUT_CHIP[p.statut] || 'chip-gold'}">${STATUT_LABELS[p.statut] || p.statut}</span>
+    </div>`;
+  }).join('');
+}
+
+function showAtelierDetail(pieceId) {
+  _atelierDetailId = pieceId;
+  document.getElementById('atelier-list-view').classList.add('hidden');
+  document.getElementById('atelier-detail-view').classList.remove('hidden');
+  renderAtelierDetail();
+}
+
+function backToAtelierListe() {
+  document.getElementById('atelier-list-view').classList.remove('hidden');
+  document.getElementById('atelier-detail-view').classList.add('hidden');
+  renderAtelierListe();
+}
+
+function renderAtelierDetail() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  if (!p) { backToAtelierListe(); return; }
+  const cmd = CommandeService.getById(p.commande_id);
+  const client = ClientService.getById(p.client_id);
+  const artisan = p.artisan_actuel_id ? ArtisanService.getById(p.artisan_actuel_id) : null;
+
+  document.getElementById('atelier-det-type').textContent = `${cmd ? cmd.type : '?'} · ${p.poids_actuel_g}g ${p.purete}`;
+  document.getElementById('atelier-det-client').textContent = client ? client.nom : '—';
+  document.getElementById('atelier-det-badge').innerHTML = `<span class="chip ${STATUT_CHIP[p.statut] || 'chip-gold'}">${STATUT_LABELS[p.statut] || p.statut}</span>`;
+  document.getElementById('atelier-det-artisan').textContent = artisan ? artisan.nom : '—';
+
+  const mvts = BijoutierStore.query('stock_atelier', m => m.piece_id === p.id)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  document.getElementById('atelier-det-historique').innerHTML = mvts.length
+    ? mvts.map(m => `<div class="depot-row"><div><span class="depot-date">${m.date}</span> · ${m.source || m.type}</div><div class="depot-amount">${m.poids_g}g${m.poids_perte_g ? ' (' + (m.poids_perte_g > 0 ? '+' : '') + m.poids_perte_g + 'g)' : ''}</div></div>`).join('')
+    : '<p class="text-muted">Aucun mouvement enregistré</p>';
+
+  renderAtelierActionZone(p);
+}
+
+function renderAtelierActionZone(p) {
+  const zone = document.getElementById('atelier-action-zone');
+
+  if (p.statut === 'au_coffre') {
+    zone.innerHTML = `
+      <div class="form-group"><label class="form-label">Poids envoyé fonderie (g)</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="actionEnvoyerFonderie()">Envoyer en fonderie</button>`;
+  } else if (p.statut === 'en_fonderie') {
+    zone.innerHTML = `
+      <div class="form-group"><label class="form-label">Poids bijou brut retourné (g)</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="actionRetourFonderie()">Retour fonderie</button>`;
+  } else if (p.statut === 'chez_artisan') {
+    zone.innerHTML = `
+      <div class="form-group"><label class="form-label">Poids retourné par l'artisan (g)</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="actionRetourArtisan()">Retour artisan</button>`;
+  } else if (p.statut === 'en_attente_chef_atelier') {
+    const artisans = ArtisanService.getAll().filter(a => a.actif);
+    zone.innerHTML = `
+      <p class="form-label" style="margin-top:0;">Affecter à un artisan</p>
+      <div class="form-row">
+        <div class="form-group">
+          <select class="nm-select" id="at-select-etape">
+            <option value="préparation">Préparation</option>
+            <option value="pré-polissage">Pré-polissage</option>
+            <option value="sertissage">Sertissage</option>
+            <option value="gravure">Gravure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <select class="nm-select" id="at-select-artisan">
+            ${artisans.map(a => `<option value="${a.id}">${a.nom} (${(a.competences || []).join(', ')})</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Poids (g)</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;margin-bottom:6px;" onclick="actionAffecterArtisan()">Affecter l'artisan</button>
+      <div class="form-row">
+        <button class="nm-btn" style="padding:9px;font-size:12px;" onclick="actionEnvoyerDouane()">Envoyer en douane</button>
+        <button class="nm-btn" style="padding:9px;font-size:12px;" onclick="actionEnvoyerFinition()">Envoyer en finition</button>
+      </div>`;
+  } else if (p.statut === 'en_douane') {
+    zone.innerHTML = `
+      <div class="form-group"><label class="form-label">Poids sortie douane (g) — doit être identique à l'entrée</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="actionCloturerDouane()">Clôturer douane</button>`;
+  } else if (p.statut === 'en_finition') {
+    zone.innerHTML = `
+      <div class="form-group"><label class="form-label">Poids final bijou fini (g)</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="actionTerminerFinition()">Terminer finition</button>`;
+  } else if (p.statut === 'finie') {
+    zone.innerHTML = `
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-bottom:6px;" onclick="actionLivrerClient()">📦 Livrer au client</button>
+      <div class="form-group"><label class="form-label">Ou retour coffre (g)</label><input class="nm-input" id="at-input-1" type="number" value="${p.poids_actuel_g}"></div>
+      <button class="nm-btn" style="width:100%;padding:9px;font-size:12px;" onclick="actionRetournerCoffre()">Retourner au coffre</button>`;
+  } else {
+    zone.innerHTML = '<p class="text-muted">Pièce arrivée en fin de parcours.</p>';
+  }
+}
+
+function actionEnvoyerFonderie() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const poids = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  CoffreService.envoyerFonderie(p.id, poids, p.purete);
+  renderAtelierDetail();
+}
+
+function actionRetourFonderie() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const poidsBrut = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  FonderieService.retourner(p.id, p.poids_actuel_g, poidsBrut, p.purete);
+  renderAtelierDetail();
+}
+
+function actionRetourArtisan() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const poidsSortie = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  ArtisanService.retourner(p.id, p.poids_actuel_g, poidsSortie, p.purete);
+  renderAtelierDetail();
+}
+
+function actionAffecterArtisan() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const typeEtape = document.getElementById('at-select-etape').value;
+  const artisanId = document.getElementById('at-select-artisan').value;
+  const poids = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  ChefAtelierService.affecterArtisan(p.id, artisanId, typeEtape, poids, p.purete);
+  renderAtelierDetail();
+}
+
+function actionEnvoyerDouane() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  ChefAtelierService.envoyerDouane(p.id);
+  renderAtelierDetail();
+}
+
+function actionEnvoyerFinition() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  ChefAtelierService.envoyerFinition(p.id);
+  renderAtelierDetail();
+}
+
+function actionCloturerDouane() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const poidsSortie = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  const res = DouaneService.cloturer(p.id, poidsSortie, p.purete);
+  if (!res.ok) { alert('❌ ' + res.erreur); return; }
+  renderAtelierDetail();
+}
+
+function actionTerminerFinition() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const poidsFinal = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  FinitionService.terminer(p.id, poidsFinal);
+  renderAtelierDetail();
+}
+
+function actionLivrerClient() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const res = SortieService.livrerClient(p.id);
+  if (res.avertissement) alert('⚠️ ' + res.avertissement);
+  backToAtelierListe();
+}
+
+function actionRetournerCoffre() {
+  const p = BijoutierStore.getById('pieces', _atelierDetailId);
+  const poids = parseFloat(document.getElementById('at-input-1').value) || p.poids_actuel_g;
+  SortieService.retournerCoffre(p.id, poids, p.purete);
+  backToAtelierListe();
+}
+
+// ─── Module Mon Trésor (stock propre + stock client) ───
+// Renderer : lit uniquement via StockService/CoursService/ClientService/CommandeService.
+function renderTresor() {
+  const cours = CoursService.getCours();
+  const config = BijoutierStore.getConfig();
+
+  const stockPropre = StockService.getStockPropre();
+  const totalPropreG = StockService.getTotalPropre();
+  const valorisationPropre = StockService.getValorisationPropre();
+
+  const stockClient = StockService.getStockClient();
+  const totalClientG = StockService.getTotalClient();
+
+  document.getElementById('tresor-total-propre-g').textContent = totalPropreG.toFixed(2) + 'g';
+  document.getElementById('tresor-total-propre-mad').textContent = valorisationPropre.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
+  document.getElementById('tresor-total-client-g').textContent = totalClientG.toFixed(2) + 'g';
+  document.getElementById('tresor-total-global-g').textContent = (totalPropreG + totalClientG).toFixed(2) + 'g';
+
+  const propreCont = document.getElementById('tresor-propre-detail');
+  const puretésPropre = Object.keys(stockPropre);
+  propreCont.innerHTML = puretésPropre.length ? puretésPropre.map(purete => {
+    const g = stockPropre[purete];
+    const facteur = config.puretés[purete] || 1;
+    const mad = g * cours * facteur;
+    return `<div class="depot-row"><div><span class="depot-amount">${purete}</span></div><div style="text-align:right;"><div>${g.toFixed(2)}g</div><div class="depot-mad">${mad.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div></div></div>`;
+  }).join('') : '<p class="text-muted">Aucun stock propre enregistré</p>';
+
+  const clientCont = document.getElementById('tresor-client-detail');
+  const clientIds = Object.keys(stockClient);
+  clientCont.innerHTML = clientIds.length ? clientIds.map(clientId => {
+    const data = stockClient[clientId];
+    const client = ClientService.getById(clientId);
+    const commandeIds = [...new Set(data.details.map(d => d.commande_id).filter(Boolean))];
+    const commandesLabel = commandeIds.map(id => {
+      const cmd = CommandeService.getById(id);
+      return cmd ? cmd.type : id;
+    }).join(', ');
+    return `<div class="client-row" style="cursor:default;">
+      <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">${client ? client.nom.substring(0, 2).toUpperCase() : '?'}</div>
+      <div class="client-info">
+        <div class="client-name">${client ? client.nom : 'Client inconnu'}</div>
+        <div class="client-meta">${commandesLabel || '—'}</div>
+      </div>
+      <div style="text-align:right;font-size:13px;font-weight:600;color:var(--gold);">${data.total_g.toFixed(2)}g</div>
+    </div>`;
+  }).join('') : '<p class="text-muted">Aucun stock client en cours</p>';
+
+  const histCont = document.getElementById('tresor-historique');
+  const mvts = [...BijoutierStore.getAll('stock_propre'), ...BijoutierStore.getAll('stock_client')]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 15);
+  histCont.innerHTML = mvts.length ? mvts.map(m => {
+    const sens = ['entree_propre', 'balayure', 'raffinage', 'depot_client'].includes(m.type) ? '+' : '−';
+    return `<div class="depot-row"><div><span class="depot-date">${m.date}</span> · ${m.type}</div><div class="depot-amount">${sens}${m.poids_g}g ${m.purete}</div></div>`;
+  }).join('') : '<p class="text-muted">Aucun mouvement</p>';
 }
 </script>
 </body>
