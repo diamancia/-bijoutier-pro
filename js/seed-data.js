@@ -11,9 +11,15 @@ const SEED_DATA = {
   },
 
   coursOr: [
-    { id: 'cor_001', date: '2026-06-19', cours_mad_g: 642, vendeur: 'Al Waha', quantite_g: 50, valide: true, created_at: '2026-06-19T08:00:00Z' },
-    { id: 'cor_002', date: '2026-06-12', cours_mad_g: 639, vendeur: 'Souk central', quantite_g: 30, valide: true, created_at: '2026-06-12T08:00:00Z' },
-    { id: 'cor_003', date: '2026-06-05', cours_mad_g: 635, vendeur: 'Négoce Atlas', quantite_g: 20, valide: true, created_at: '2026-06-05T08:00:00Z' },
+    { id: 'cor_001', date: '2026-06-19', cours_mad_g: 642, carat_saisi: '24K', cours_saisi: 642, vendeur: 'Ennachi', quantite_g: 50, valide: true, created_at: '2026-06-19T08:00:00Z' },
+    { id: 'cor_002', date: '2026-06-12', cours_mad_g: 639, carat_saisi: '24K', cours_saisi: 639, vendeur: 'Ahroum Manjra', quantite_g: 30, valide: true, created_at: '2026-06-12T08:00:00Z' },
+    { id: 'cor_003', date: '2026-06-05', cours_mad_g: 635, carat_saisi: '24K', cours_saisi: 635, vendeur: 'Ahroum Sd Othmane', quantite_g: 20, valide: true, created_at: '2026-06-05T08:00:00Z' },
+  ],
+
+  achatsDivers: [
+    { id: 'ach_001', categorie: 'Chdaya', poids_g: 8, carat: 18, prix_achat_mad_g: 460, cours_18k_applique: 481.5, poids_18k_equiv_g: 8, cout_mad: 3680, valeur_marche_mad: 3852, gain_mad: 172, date: '2026-06-19', created_at: '2026-06-19T10:30:00Z' },
+    { id: 'ach_002', categorie: 'Sbika', poids_g: 10, carat: 14.5, prix_achat_mad_g: 370, cours_18k_applique: 481.5, poids_18k_equiv_g: 8.0555555556, cout_mad: 3700, valeur_marche_mad: 3878.75, gain_mad: 178.75, date: '2026-06-18', created_at: '2026-06-18T14:00:00Z' },
+    { id: 'ach_003', categorie: 'Dlala', poids_g: 5, carat: 18, prix_achat_mad_g: 470, cours_18k_applique: 479.25, poids_18k_equiv_g: 5, cout_mad: 2350, valeur_marche_mad: 2396.25, gain_mad: 46.25, date: '2026-06-12', created_at: '2026-06-12T11:15:00Z' },
   ],
 
   artisans: [

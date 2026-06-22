@@ -1067,61 +1067,148 @@ body {
 
       <!-- Cours or -->
       <div id="met-cours" class="hidden">
-        <div class="nm-card">
-          <p class="section-title">Nouveau cours</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Date</label>
-              <input class="nm-input" type="date" id="cours-date" value="2026-06-19">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Cours (MAD/g)</label>
-              <input class="nm-input" id="cours-val-input" type="number" placeholder="642" oninput="updateCoursPreview()">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Tiers / Vendeur</label>
-              <input class="nm-input" placeholder="Nom vendeur">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Quantité 24K (g)</label>
-              <input class="nm-input" id="cours-qty" type="number" placeholder="50" oninput="updateCoursPreview()">
-            </div>
-          </div>
-          <div class="nm-inset" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;">
+
+        <!-- Vue principale Cours -->
+        <div id="cours-main-view">
+          <!-- Barre compacte (cours actif) — affichée après validation -->
+          <div id="cours-bar" class="nm-card hidden" style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="expandCoursForm()">
             <div>
-              <div class="form-label">Valeur totale</div>
-              <div class="stat-val" id="cours-preview">— MAD</div>
+              <div class="form-label" style="margin-bottom:0;">Cours actif</div>
+              <div><span class="stat-val" id="cours-bar-val">—</span> <span class="text-muted" id="cours-bar-meta"></span></div>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="cours-valid" style="width:18px;height:18px;accent-color:var(--gold);">
-              <span style="font-size:12px;font-weight:500;color:var(--text);">Valider</span>
-            </label>
+            <span class="chip chip-gold">Modifier ▾</span>
           </div>
-          <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;margin-top:8px;font-size:12px;" onclick="saveCours()">Définir comme cours actif</button>
+
+          <!-- Formulaire complet -->
+          <div class="nm-card" id="cours-form-card">
+            <div class="filter-tabs">
+              <button class="filter-tab active" id="carat-tab-18" onclick="selectCoursCarat('18K', this)">Cours 18K</button>
+              <button class="filter-tab" id="carat-tab-24" onclick="selectCoursCarat('24K', this)">Cours 24K</button>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Date</label>
+                <input class="nm-input" type="date" id="cours-date">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cours (MAD/g) <span id="cours-carat-lbl">18K</span></label>
+                <input class="nm-input" id="cours-val-input" type="number" placeholder="481" oninput="updateCoursPreview()">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Raffineur</label>
+                <select class="nm-select" id="cours-raffineur"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantité (g)</label>
+                <input class="nm-input" id="cours-qty" type="number" placeholder="50" oninput="updateCoursPreview()">
+              </div>
+            </div>
+            <div class="nm-inset" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div class="form-label">Valeur totale</div>
+                <div class="stat-val" id="cours-preview">— MAD</div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="cours-valid" style="width:18px;height:18px;accent-color:var(--gold);">
+                <span style="font-size:12px;font-weight:500;color:var(--text);">Valider</span>
+              </label>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;margin-top:8px;font-size:12px;" onclick="saveCours()">Définir comme cours actif</button>
+          </div>
+
+          <!-- Accès Achats divers -->
+          <div class="nm-card" style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="card-title" style="margin-bottom:2px;">Achats divers</div>
+              <div class="text-muted">Chdaya · Sbika · Dlala · Cliente</div>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="font-size:12px;padding:8px 12px;" onclick="showAchatsDivers()">Ouvrir →</button>
+          </div>
+
+          <!-- Historique cours -->
+          <div class="nm-card">
+            <p class="section-title">Historique cours</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Du</label>
+                <input class="nm-input" type="date" id="hist-cours-debut" onchange="renderCoursHistorique()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Au</label>
+                <input class="nm-input" type="date" id="hist-cours-fin" onchange="renderCoursHistorique()">
+              </div>
+            </div>
+            <div id="cours-historique-list"></div>
+          </div>
+
+          <!-- Histogramme CA par client -->
+          <div class="nm-card">
+            <p class="section-title">CA par client</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Du</label>
+                <input class="nm-input" type="date" id="ca-debut" onchange="renderCAHistogramme()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Au</label>
+                <input class="nm-input" type="date" id="ca-fin" onchange="renderCAHistogramme()">
+              </div>
+            </div>
+            <div class="chart-bars" id="ca-chart-bars" style="height:100px;"></div>
+            <div id="ca-legende" style="margin-top:8px;"></div>
+          </div>
         </div>
-        <div class="nm-card">
-          <p class="section-title">Historique cours</p>
-          <div class="filter-tabs">
-            <button class="filter-tab active" onclick="switchFilter(this)">7j</button>
-            <button class="filter-tab" onclick="switchFilter(this)">30j</button>
-            <button class="filter-tab" onclick="switchFilter(this)">1 an</button>
+
+        <!-- Sous-vue Achats divers -->
+        <div id="achats-divers-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="hideAchatsDivers()">← Retour cours</button>
+
+          <div class="nm-card">
+            <p class="section-title">Nouvel achat</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Catégorie</label>
+                <select class="nm-select" id="ach-cat">
+                  <option>Chdaya</option>
+                  <option>Sbika</option>
+                  <option>Dlala</option>
+                  <option>Cliente</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date</label>
+                <input class="nm-input" type="date" id="ach-date">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Poids (g)</label>
+                <input class="nm-input" type="number" id="ach-poids" placeholder="10" oninput="updateAchatPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Carat</label>
+                <input class="nm-input" type="number" id="ach-carat" value="18" step="0.5" oninput="updateAchatPreview()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prix d'achat (MAD/g)</label>
+              <input class="nm-input" type="number" id="ach-prix" placeholder="460" oninput="updateAchatPreview()">
+            </div>
+            <div class="nm-inset" style="margin-top:6px;">
+              <div class="depot-row" style="border:none;padding:3px 0;"><span class="form-label" style="margin:0;">Équivalent 18K</span><span class="depot-amount" id="ach-prev-equiv">— g</span></div>
+              <div class="depot-row" style="border:none;padding:3px 0;"><span class="form-label" style="margin:0;">Cours 18K du jour</span><span class="depot-amount" id="ach-prev-cours">— MAD/g</span></div>
+              <div class="depot-row" style="border:none;padding:3px 0;"><span class="form-label" style="margin:0;">Coût payé</span><span class="depot-amount" id="ach-prev-cout">— MAD</span></div>
+              <div class="depot-row" style="border:none;padding:3px 0;"><span class="form-label" style="margin:0;">Valeur marché</span><span class="depot-amount" id="ach-prev-valeur">— MAD</span></div>
+              <div class="depot-row" style="border:none;padding:3px 0;"><span style="font-weight:600;color:var(--text);">Solde (gain)</span><span class="depot-mad" id="ach-prev-gain">— MAD</span></div>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;margin-top:8px;font-size:12px;" onclick="saveAchatDivers()">Enregistrer l'achat</button>
           </div>
-          <div class="cours-entry">
-            <div><div class="cours-date">19/06/2026 · Al Waha</div><div class="cours-qty">50g 24K</div></div>
-            <div class="cours-val">642 MAD/g</div>
-            <div class="cours-check">✅</div>
-          </div>
-          <div class="cours-entry">
-            <div><div class="cours-date">12/06/2026 · Souk central</div><div class="cours-qty">30g 24K</div></div>
-            <div class="cours-val">639 MAD/g</div>
-            <div class="cours-check">✅</div>
-          </div>
-          <div class="cours-entry" style="border:none;">
-            <div><div class="cours-date">05/06/2026 · Négoce Atlas</div><div class="cours-qty">20g 24K</div></div>
-            <div class="cours-val">635 MAD/g</div>
-            <div class="cours-check">✅</div>
+
+          <div class="nm-card">
+            <p class="section-title">Historique achats <span id="ach-total-gain" style="float:right;color:var(--gold);"></span></p>
+            <div id="achats-historique-list"></div>
           </div>
         </div>
       </div>
@@ -1365,6 +1452,7 @@ function switchMetierTab(tab, btn) {
   btn.classList.add('active');
   if (tab === 'atelier') backToAtelierListe();
   if (tab === 'tresor') renderTresor();
+  if (tab === 'cours') initCoursModule();
 }
 
 function switchFilter(btn) {
@@ -1401,6 +1489,32 @@ function calcRaffinage() {
   document.getElementById('raf-result-mad').textContent = q24 > 0 ? mad.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD' : '—';
 }
 
+// ─── Module Cours or (renderer : lit/écrit via CoursService/CAService/AchatDiversService) ───
+const RAFFINEURS = ['Ennachi', 'Ahroum Manjra', 'Ahroum Sd Othmane'];
+let COURS_CARAT = '18K';
+
+function initCoursModule() {
+  // Raffineurs
+  const sel = document.getElementById('cours-raffineur');
+  if (sel && !sel.options.length) sel.innerHTML = RAFFINEURS.map(r => `<option>${r}</option>`).join('');
+  // Dates par défaut
+  const today = new Date().toISOString().split('T')[0];
+  if (!document.getElementById('cours-date').value) document.getElementById('cours-date').value = today;
+  if (!document.getElementById('ach-date').value) document.getElementById('ach-date').value = today;
+  hideAchatsDivers();
+  refreshCoursBar();
+  renderCoursHistorique();
+  renderCAHistogramme();
+}
+
+function selectCoursCarat(carat, btn) {
+  COURS_CARAT = carat;
+  btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cours-carat-lbl').textContent = carat;
+  updateCoursPreview();
+}
+
 function updateCoursPreview() {
   const val = parseFloat(document.getElementById('cours-val-input').value) || 0;
   const qty = parseFloat(document.getElementById('cours-qty').value) || 0;
@@ -1411,16 +1525,143 @@ function saveCours() {
   const val = parseFloat(document.getElementById('cours-val-input').value) || 0;
   const date = document.getElementById('cours-date').value || new Date().toISOString().split('T')[0];
   const qty = parseFloat(document.getElementById('cours-qty').value) || 0;
+  const raffineur = document.getElementById('cours-raffineur').value;
   const valid = document.getElementById('cours-valid').checked;
   if (!val) { alert('Entrez un cours'); return; }
   if (!valid) { alert('Veuillez cocher la validation'); return; }
 
-  CoursService.ajouterCours({ date, cours_mad_g: val, vendeur: '', quantite_g: qty, valide: true });
+  CoursService.ajouterCours({ date, cours_saisi: val, carat_saisi: COURS_CARAT, vendeur: raffineur, quantite_g: qty, valide: true });
 
-  COURS_ACTIF = val;
-  document.getElementById('ticker-cours').textContent = val + ' MAD/g';
-  document.getElementById('caisse-cours-display').textContent = val;
-  alert('✅ Cours ' + val + ' MAD/g activé — tous les modules mis à jour');
+  const cours24k = CoursService.getCours();
+  COURS_ACTIF = cours24k;
+  document.getElementById('ticker-cours').textContent = Math.round(cours24k) + ' MAD/g';
+  document.getElementById('caisse-cours-display').textContent = Math.round(cours24k);
+
+  collapseCoursForm();
+  refreshCoursBar();
+  renderCoursHistorique();
+  renderCAHistogramme();
+  if (typeof renderTresor === 'function') renderTresor();
+}
+
+function refreshCoursBar() {
+  const cours24k = CoursService.getCours();
+  const actif = CoursService.getCoursActif();
+  if (!actif) return;
+  document.getElementById('cours-bar-val').textContent = Math.round(cours24k) + ' MAD/g 24K';
+  const c18 = Math.round(CoursService.getCours18k());
+  document.getElementById('cours-bar-meta').textContent = `· ${c18} MAD/g 18K · ${actif.vendeur || ''}`;
+}
+
+function collapseCoursForm() {
+  document.getElementById('cours-form-card').classList.add('hidden');
+  document.getElementById('cours-bar').classList.remove('hidden');
+}
+
+function expandCoursForm() {
+  document.getElementById('cours-form-card').classList.remove('hidden');
+  document.getElementById('cours-bar').classList.add('hidden');
+}
+
+function renderCoursHistorique() {
+  const debut = document.getElementById('hist-cours-debut').value;
+  const fin = document.getElementById('hist-cours-fin').value;
+  const list = BijoutierStore.getAll('coursOr')
+    .filter(c => (!debut || c.date >= debut) && (!fin || c.date <= fin))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const cont = document.getElementById('cours-historique-list');
+  cont.innerHTML = list.length ? list.map(c => {
+    const carat = c.carat_saisi || '24K';
+    const valAff = c.cours_saisi || c.cours_mad_g;
+    return `<div class="cours-entry">
+      <div><div class="cours-date">${c.date} · ${c.vendeur || ''}</div><div class="cours-qty">${c.quantite_g || 0}g · saisi en ${carat}</div></div>
+      <div class="cours-val">${valAff} MAD/g</div>
+      <div class="cours-check">${c.valide ? '✅' : '⏳'}</div>
+    </div>`;
+  }).join('') : '<p class="text-muted">Aucun cours sur cette période</p>';
+}
+
+function renderCAHistogramme() {
+  const debut = document.getElementById('ca-debut').value || null;
+  const fin = document.getElementById('ca-fin').value || null;
+  const repartition = CAService.repartitionParClient(debut, fin);
+  const bars = document.getElementById('ca-chart-bars');
+  const legende = document.getElementById('ca-legende');
+
+  if (!repartition.length) {
+    bars.innerHTML = '';
+    legende.innerHTML = '<p class="text-muted">Aucune commande livrée sur cette période</p>';
+    return;
+  }
+  const maxCA = Math.max(...repartition.map(r => r.ca));
+  bars.innerHTML = repartition.map(r => {
+    const h = Math.max(6, (r.ca / maxCA) * 90);
+    const initiales = r.client.nom.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+    return `<div class="chart-bar-wrap">
+      <div style="font-size:9px;color:var(--gold);font-weight:600;">${Math.round(r.pourcent)}%</div>
+      <div class="bar-gold" style="height:${h}px;"></div>
+      <div class="bar-lbl">${initiales}</div>
+    </div>`;
+  }).join('');
+  legende.innerHTML = repartition.map(r => `
+    <div class="depot-row"><div>${r.client.nom}</div><div><span class="depot-mad">${r.ca.toLocaleString('fr-MA', {maximumFractionDigits:0})} MAD</span> <span class="text-muted">(${r.pourcent.toFixed(1)}%)</span></div></div>
+  `).join('');
+}
+
+// ─── Achats divers ───
+function showAchatsDivers() {
+  document.getElementById('cours-main-view').classList.add('hidden');
+  document.getElementById('achats-divers-view').classList.remove('hidden');
+  updateAchatPreview();
+  renderAchatsHistorique();
+}
+
+function hideAchatsDivers() {
+  document.getElementById('cours-main-view').classList.remove('hidden');
+  document.getElementById('achats-divers-view').classList.add('hidden');
+}
+
+function updateAchatPreview() {
+  const poids = parseFloat(document.getElementById('ach-poids').value) || 0;
+  const carat = parseFloat(document.getElementById('ach-carat').value) || 18;
+  const prix = parseFloat(document.getElementById('ach-prix').value) || 0;
+  const calc = AchatDiversService.calculer(poids, carat, prix);
+  const fmt = (v, u) => v ? v.toLocaleString('fr-MA', {maximumFractionDigits: u === 'g' ? 3 : 0}) + ' ' + u : '— ' + u;
+  document.getElementById('ach-prev-equiv').textContent = poids ? calc.poids_18k_equiv_g.toFixed(3) + ' g' : '— g';
+  document.getElementById('ach-prev-cours').textContent = Math.round(calc.cours_18k_applique) + ' MAD/g';
+  document.getElementById('ach-prev-cout').textContent = fmt(calc.cout_mad, 'MAD');
+  document.getElementById('ach-prev-valeur').textContent = fmt(calc.valeur_marche_mad, 'MAD');
+  const gainEl = document.getElementById('ach-prev-gain');
+  gainEl.textContent = (poids && prix) ? (calc.gain_mad >= 0 ? '+' : '') + calc.gain_mad.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD' : '— MAD';
+  gainEl.style.color = calc.gain_mad >= 0 ? 'var(--success)' : 'var(--danger)';
+}
+
+function saveAchatDivers() {
+  const poids = parseFloat(document.getElementById('ach-poids').value) || 0;
+  const carat = parseFloat(document.getElementById('ach-carat').value) || 18;
+  const prix = parseFloat(document.getElementById('ach-prix').value) || 0;
+  const categorie = document.getElementById('ach-cat').value;
+  const date = document.getElementById('ach-date').value || new Date().toISOString().split('T')[0];
+  if (!poids || !prix) { alert('Renseignez le poids et le prix d\'achat'); return; }
+
+  AchatDiversService.enregistrer({ categorie, poids_g: poids, carat, prix_achat_mad_g: prix, date });
+  document.getElementById('ach-poids').value = '';
+  document.getElementById('ach-prix').value = '';
+  updateAchatPreview();
+  renderAchatsHistorique();
+}
+
+function renderAchatsHistorique() {
+  const list = AchatDiversService.getHistorique();
+  const cont = document.getElementById('achats-historique-list');
+  document.getElementById('ach-total-gain').textContent = list.length ? '+' + AchatDiversService.getTotalGain().toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD' : '';
+  cont.innerHTML = list.length ? list.map(a => {
+    const gainColor = a.gain_mad >= 0 ? 'var(--success)' : 'var(--danger)';
+    return `<div class="depot-row">
+      <div><span class="depot-amount">${a.categorie}</span> <span class="text-muted">${a.poids_g}g · ${a.carat}ct</span><br><span class="text-muted" style="font-size:10px;">${a.date} · achat ${a.prix_achat_mad_g} vs 18k ${Math.round(a.cours_18k_applique)}</span></div>
+      <div style="text-align:right;"><div style="font-weight:600;color:${gainColor};">${a.gain_mad >= 0 ? '+' : ''}${a.gain_mad.toLocaleString('fr-MA', {maximumFractionDigits:0})} MAD</div></div>
+    </div>`;
+  }).join('') : '<p class="text-muted">Aucun achat enregistré</p>';
 }
 
 function calcCaisse() {

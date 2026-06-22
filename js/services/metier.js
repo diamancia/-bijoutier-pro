@@ -11,6 +11,12 @@ const CoursService = {
     return BijoutierStore.getCoursActifValeur();
   },
 
+  // Cours équivalent 18k (75% du cours 24k) — base de calcul des achats divers
+  getCours18k() {
+    const config = BijoutierStore.getConfig();
+    return this.getCours() * (config.puretés['18K'] || 0.75);
+  },
+
   getCoursActif() {
     return BijoutierStore.getCoursActif();
   },
@@ -34,8 +40,22 @@ const CoursService = {
     };
   },
 
+  // Enregistre un cours. Le carat saisi (18K/24K) détermine la conversion :
+  // on stocke toujours cours_mad_g en équivalent-24k pour la cohérence de toute l'app.
   ajouterCours(data) {
-    return BijoutierStore.add('coursOr', data);
+    const config = BijoutierStore.getConfig();
+    const carat = data.carat_saisi || '24K';
+    const facteur = config.puretés[carat] || 1;
+    const cours24k = facteur > 0 ? data.cours_saisi / facteur : data.cours_saisi;
+    return BijoutierStore.add('coursOr', {
+      date: data.date,
+      cours_mad_g: Math.round(cours24k * 100) / 100,
+      carat_saisi: carat,
+      cours_saisi: data.cours_saisi,
+      vendeur: data.vendeur || '',
+      quantite_g: data.quantite_g || 0,
+      valide: data.valide !== undefined ? data.valide : true,
+    });
   },
 
   validerCours(id) {
@@ -531,6 +551,31 @@ const CAService = {
     return livrees.reduce((sum, c) => sum + (c.tarif_prestation || 0), 0);
   },
 
+  // CA d'un client sur une période donnée (commandes livrées dans l'intervalle)
+  parClientPeriode(clientId, debut, fin) {
+    const livrees = BijoutierStore.query('commandes', c =>
+      c.client_id === clientId &&
+      c.statut === 'livree' &&
+      c.date_livraison_effective &&
+      (!debut || c.date_livraison_effective >= debut) &&
+      (!fin || c.date_livraison_effective <= fin)
+    );
+    return livrees.reduce((sum, c) => sum + (c.tarif_prestation || 0), 0);
+  },
+
+  // Répartition du CA par client sur une période, triée + part en % du total
+  repartitionParClient(debut, fin) {
+    const lignes = ClientService.getAll()
+      .map(c => ({ client: c, ca: this.parClientPeriode(c.id, debut, fin) }))
+      .filter(l => l.ca > 0)
+      .sort((a, b) => b.ca - a.ca);
+    const total = lignes.reduce((s, l) => s + l.ca, 0);
+    return lignes.map(l => ({
+      ...l,
+      pourcent: total > 0 ? (l.ca / total) * 100 : 0,
+    }));
+  },
+
   duJour(date = null) {
     const today = date || new Date().toISOString().split('T')[0];
     return this.parPeriode(today, today);
@@ -915,5 +960,56 @@ const SortieService = {
     BijoutierStore.update('pieces', pieceId, { date_sortie_finale: today });
 
     return CoffreService.recevoirRetourFinition(pieceId, poidsG, purete || piece.purete);
+  },
+};
+
+// ═══════════════════════════════════════════
+// ACHAT DIVERS SERVICE (Chdaya, sbika, dlala, cliente — achats d'or au comptoir)
+// Gain = valeur marché 18k de l'or reçu − coût payé.
+// L'or reçu est ramené en équivalent-18k selon son carat : poids × carat / 18.
+// ═══════════════════════════════════════════
+const AchatDiversService = {
+  CATEGORIES: ['Chdaya', 'Sbika', 'Dlala', 'Cliente'],
+
+  calculer(poidsG, carat, prixAchatMadG) {
+    const cours18k = CoursService.getCours18k();
+    const poids18kEquiv = poidsG * ((carat || 18) / 18);
+    const valeurMarche = poids18kEquiv * cours18k;
+    const cout = poidsG * (prixAchatMadG || 0);
+    return {
+      cours_18k_applique: cours18k,
+      poids_18k_equiv_g: poids18kEquiv,
+      cout_mad: cout,
+      valeur_marche_mad: valeurMarche,
+      gain_mad: valeurMarche - cout,
+    };
+  },
+
+  enregistrer(data) {
+    const calc = this.calculer(data.poids_g, data.carat, data.prix_achat_mad_g);
+    return BijoutierStore.add('achatsDivers', {
+      categorie: data.categorie,
+      poids_g: data.poids_g,
+      carat: data.carat || 18,
+      prix_achat_mad_g: data.prix_achat_mad_g,
+      cours_18k_applique: calc.cours_18k_applique,
+      poids_18k_equiv_g: calc.poids_18k_equiv_g,
+      cout_mad: calc.cout_mad,
+      valeur_marche_mad: calc.valeur_marche_mad,
+      gain_mad: calc.gain_mad,
+      date: data.date || new Date().toISOString().split('T')[0],
+    });
+  },
+
+  getHistorique(filtre = {}) {
+    return BijoutierStore.query('achatsDivers', a =>
+      (!filtre.categorie || a.categorie === filtre.categorie) &&
+      (!filtre.debut || a.date >= filtre.debut) &&
+      (!filtre.fin || a.date <= filtre.fin)
+    ).sort((a, b) => new Date(b.date) - new Date(a.date));
+  },
+
+  getTotalGain(filtre = {}) {
+    return this.getHistorique(filtre).reduce((sum, a) => sum + (a.gain_mad || 0), 0);
   },
 };

@@ -11,7 +11,8 @@ const BijoutierStore = (() => {
       devise: 'MAD',
       puretés: { '24K': 1, '22K': 0.916, '18K': 0.75, '14K': 0.585, '9K': 0.375 },
     },
-    coursOr: [],               // { id, date, cours_mad_g, vendeur, quantite_g, valide, created_at }
+    coursOr: [],               // { id, date, cours_mad_g, carat_saisi, cours_saisi, vendeur, quantite_g, valide, created_at }
+    achatsDivers: [],          // { id, categorie, poids_g, carat, prix_achat_mad_g, cours_18k_applique, poids_18k_equiv_g, cout_mad, valeur_marche_mad, gain_mad, date, created_at }
     clients: [],               // { id, nom, telephone, bijouterie, tarif_prestation, created_at }
     commandes: [],             // { id, client_id, type, poids_or_g, purete, pierres, taille, date_depot_or, date_livraison_prevue, date_livraison_effective, statut, tarif_prestation, type_metal, prix_modele_3d_mad, honoraires_mad, or_prete_g, piece_id, notes, created_at }
     stock: {
@@ -153,6 +154,7 @@ const BijoutierStore = (() => {
     try {
       const toSave = {
         coursOr: _state.coursOr,
+        achatsDivers: _state.achatsDivers,
         clients: _state.clients,
         commandes: _state.commandes,
         stock: _state.stock,
@@ -179,6 +181,7 @@ const BijoutierStore = (() => {
 
       const data = JSON.parse(saved);
       if (data.coursOr) _state.coursOr = data.coursOr;
+      if (data.achatsDivers) _state.achatsDivers = data.achatsDivers;
       if (data.clients) _state.clients = data.clients;
       if (data.commandes) _state.commandes = data.commandes;
       if (data.stock) _state.stock = data.stock;
@@ -202,6 +205,7 @@ const BijoutierStore = (() => {
 
   function clearAll() {
     _state.coursOr = [];
+    _state.achatsDivers = [];
     _state.clients = [];
     _state.commandes = [];
     _state.stock = { propre: [], client: [], atelier: [] };
@@ -279,6 +283,7 @@ const BijoutierStore = (() => {
   function _countItems() {
     return {
       coursOr: _state.coursOr.length,
+      achatsDivers: _state.achatsDivers.length,
       clients: _state.clients.length,
       commandes: _state.commandes.length,
       balayures: _state.balayures.length,
