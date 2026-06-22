@@ -653,6 +653,7 @@ body {
     <div class="tab-content" id="tab-base">
       <div class="sub-tabs">
         <button class="sub-tab active" onclick="switchSubTab('clients', this)">Clients</button>
+        <button class="sub-tab" onclick="switchSubTab('commandes', this)">Commandes</button>
         <button class="sub-tab" onclick="switchSubTab('articles', this)">Articles</button>
         <button class="sub-tab" onclick="switchSubTab('galerie', this)">Galerie</button>
       </div>
@@ -749,6 +750,95 @@ body {
               </div>
             </div>
             <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sub-commandes" class="hidden">
+        <div id="commande-list-view">
+          <div id="commandes-list"></div>
+          <div style="margin-top:10px;">
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="showAddCommande()">+ Nouvelle commande</button>
+          </div>
+        </div>
+
+        <div id="commande-detail-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+          <div class="nm-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="card-title" id="cmd-det-type">—</div>
+                <div class="text-muted" id="cmd-det-client">—</div>
+              </div>
+              <div id="cmd-det-badge"></div>
+            </div>
+            <div class="stat-row" style="margin-top:10px;">
+              <div class="stat-box">
+                <div class="stat-val" id="cmd-det-poids">—</div>
+                <div class="stat-lbl">Poids (g)</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-val" id="cmd-det-jours">—</div>
+                <div class="stat-lbl">Jours restants</div>
+              </div>
+            </div>
+            <div class="nm-inset" style="margin-top:8px;">
+              <div class="form-label">Timeline</div>
+              <div id="cmd-det-timeline" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:10px;" id="cmd-det-livrer-btn" onclick="livrerCommandeActuelle()">📦 Marquer comme livrée</button>
+          </div>
+        </div>
+
+        <div id="add-commande-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+          <div class="nm-card">
+            <p class="section-title">Nouvelle commande</p>
+            <div class="form-group">
+              <label class="form-label">Client</label>
+              <select class="nm-select" id="cmd-add-client"></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <input class="nm-input" id="cmd-add-type" placeholder="Bague, Collier...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Poids or (g)</label>
+                <input class="nm-input" id="cmd-add-poids" type="number" placeholder="3.5">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Pureté</label>
+                <select class="nm-select" id="cmd-add-purete">
+                  <option value="24K">24K</option>
+                  <option value="22K">22K</option>
+                  <option value="18K" selected>18K</option>
+                  <option value="14K">14K</option>
+                  <option value="9K">9K</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Taille</label>
+                <input class="nm-input" id="cmd-add-taille" placeholder="52">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pierres</label>
+              <input class="nm-input" id="cmd-add-pierres" placeholder="Sans pierres">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Date dépôt</label>
+                <input class="nm-input" type="date" id="cmd-add-depot">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Livraison prévue</label>
+                <input class="nm-input" type="date" id="cmd-add-livraison">
+              </div>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;" onclick="submitAddCommande()">Créer la commande</button>
           </div>
         </div>
       </div>
@@ -1067,7 +1157,13 @@ body {
 </div>
 </div>
 
+<script src="js/supabase-client.js"></script>
+<script src="js/store.js"></script>
+<script src="js/seed-data.js"></script>
+<script src="js/services/metier.js"></script>
 <script>
+BijoutierStore.init(SEED_DATA);
+
 let COURS_ACTIF = 642;
 let isOffline = false;
 
@@ -1130,13 +1226,14 @@ function switchTab(tab) {
 }
 
 function switchSubTab(tab, btn) {
-  ['clients','articles','galerie'].forEach(t => {
+  ['clients','commandes','articles','galerie'].forEach(t => {
     const el = document.getElementById('sub-' + t);
     if (el) el.classList.toggle('hidden', t !== tab);
   });
   btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (tab === 'clients') backToClients();
+  if (tab === 'commandes') backToCommandesListe();
 }
 
 function switchMetierTab(tab, btn) {
@@ -1256,6 +1353,112 @@ function filterClients() {
   document.querySelectorAll('.client-row').forEach(row => {
     row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
+}
+
+// ─── Module Commandes (renderer : lit via CommandeService/ClientService, n'écrit jamais directement) ───
+let _commandeDetailId = null;
+
+function alerteBadgeHtml(niveau, jours) {
+  if (niveau === 'retard') return `<span class="chip chip-red">Retard ${Math.abs(jours)}j</span>`;
+  if (niveau === 'urgent') return `<span class="chip chip-gold">${jours}j restants</span>`;
+  return '';
+}
+
+function renderCommandesListe() {
+  const cont = document.getElementById('commandes-list');
+  if (!cont) return;
+  const commandes = CommandeService.getEnCours();
+  if (commandes.length === 0) {
+    cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucune commande en cours</p>';
+    return;
+  }
+  cont.innerHTML = commandes.map(cmd => {
+    const client = ClientService.getById(cmd.client_id);
+    const jours = CommandeService.getJoursRestants(cmd);
+    const niveau = CommandeService.getNiveauAlerte(cmd);
+    return `<div class="client-row" onclick="showCommandeDetail('${cmd.id}')">
+      <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">${(cmd.type || '?').substring(0, 2).toUpperCase()}</div>
+      <div class="client-info">
+        <div class="client-name">${cmd.type} · ${client ? client.nom : '?'}</div>
+        <div class="client-meta">${cmd.poids_or_g}g · ${cmd.purete} · livraison ${cmd.date_livraison_prevue}</div>
+      </div>
+      ${alerteBadgeHtml(niveau, jours)}
+    </div>`;
+  }).join('');
+}
+
+function showCommandeDetail(id) {
+  _commandeDetailId = id;
+  document.getElementById('commande-list-view').classList.add('hidden');
+  document.getElementById('add-commande-view').classList.add('hidden');
+  document.getElementById('commande-detail-view').classList.remove('hidden');
+
+  const cmd = CommandeService.getById(id);
+  const client = ClientService.getById(cmd.client_id);
+  const jours = CommandeService.getJoursRestants(cmd);
+  const niveau = CommandeService.getNiveauAlerte(cmd);
+
+  document.getElementById('cmd-det-type').textContent = `${cmd.type} · ${cmd.poids_or_g}g ${cmd.purete}`;
+  document.getElementById('cmd-det-client').textContent = client ? `${client.nom} · ${client.telephone}` : '—';
+  document.getElementById('cmd-det-poids').textContent = cmd.poids_or_g + 'g';
+  document.getElementById('cmd-det-jours').textContent = cmd.statut === 'livree' ? '—' : (jours + 'j');
+
+  const badgeEl = document.getElementById('cmd-det-badge');
+  badgeEl.innerHTML = cmd.statut === 'livree'
+    ? '<span class="chip chip-green">Livrée</span>'
+    : (alerteBadgeHtml(niveau, jours) || '<span class="chip chip-green">En cours</span>');
+
+  document.getElementById('cmd-det-timeline').innerHTML = `
+    <div>📥 Dépôt or : ${cmd.date_depot_or}</div>
+    <div>📅 Livraison prévue : ${cmd.date_livraison_prevue}</div>
+    <div>${cmd.statut === 'livree' ? '✅ Livrée le ' + cmd.date_livraison_effective : '⏳ En cours'}</div>
+  `;
+
+  document.getElementById('cmd-det-livrer-btn').style.display = cmd.statut === 'livree' ? 'none' : 'block';
+}
+
+function backToCommandesListe() {
+  document.getElementById('commande-list-view').classList.remove('hidden');
+  document.getElementById('commande-detail-view').classList.add('hidden');
+  document.getElementById('add-commande-view').classList.add('hidden');
+  renderCommandesListe();
+}
+
+function showAddCommande() {
+  document.getElementById('commande-list-view').classList.add('hidden');
+  document.getElementById('add-commande-view').classList.remove('hidden');
+  document.getElementById('cmd-add-client').innerHTML = ClientService.getAll()
+    .map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
+  document.getElementById('cmd-add-depot').value = new Date().toISOString().split('T')[0];
+}
+
+function submitAddCommande() {
+  const clientId = document.getElementById('cmd-add-client').value;
+  const type = document.getElementById('cmd-add-type').value.trim();
+  const poids = parseFloat(document.getElementById('cmd-add-poids').value) || 0;
+  const purete = document.getElementById('cmd-add-purete').value;
+  const taille = document.getElementById('cmd-add-taille').value.trim();
+  const pierres = document.getElementById('cmd-add-pierres').value.trim() || 'Sans pierres';
+  const depot = document.getElementById('cmd-add-depot').value;
+  const livraison = document.getElementById('cmd-add-livraison').value;
+
+  if (!clientId || !type || !poids || !depot || !livraison) {
+    alert('Merci de remplir tous les champs obligatoires');
+    return;
+  }
+
+  CommandeService.creer({
+    client_id: clientId, type, poids_or_g: poids, purete, taille, pierres,
+    date_depot_or: depot, date_livraison_prevue: livraison,
+  });
+
+  backToCommandesListe();
+}
+
+function livrerCommandeActuelle() {
+  if (!_commandeDetailId) return;
+  CommandeService.livrer(_commandeDetailId);
+  showCommandeDetail(_commandeDetailId);
 }
 </script>
 </body>
