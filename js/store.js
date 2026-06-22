@@ -149,10 +149,13 @@ const BijoutierStore = (() => {
 
   // ─── PERSISTANCE LOCALE ───
   const STORAGE_KEY = 'bijoutier_pro_data';
+  // Incrémenter à chaque changement de schéma : invalide les données locales obsolètes
+  const SCHEMA_VERSION = 5;
 
   function _persist() {
     try {
       const toSave = {
+        _schemaVersion: SCHEMA_VERSION,
         coursOr: _state.coursOr,
         achatsDivers: _state.achatsDivers,
         clients: _state.clients,
@@ -180,6 +183,12 @@ const BijoutierStore = (() => {
       if (!saved) return false;
 
       const data = JSON.parse(saved);
+      // Données d'une version antérieure → on les ignore et on repart des données seed
+      if (data._schemaVersion !== SCHEMA_VERSION) {
+        localStorage.removeItem(STORAGE_KEY);
+        console.log('[Store] Schéma obsolète, réinitialisation des données locales');
+        return false;
+      }
       if (data.coursOr) _state.coursOr = data.coursOr;
       if (data.achatsDivers) _state.achatsDivers = data.achatsDivers;
       if (data.clients) _state.clients = data.clients;
