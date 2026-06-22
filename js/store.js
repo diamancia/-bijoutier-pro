@@ -10,10 +10,8 @@ const BijoutierStore = (() => {
       coursActif: null,        // référence vers le dernier cours validé
       devise: 'MAD',
       puretés: { '24K': 1, '22K': 0.916, '18K': 0.75, '14K': 0.585, '9K': 0.375 },
-      puretésArgent: { '999': 0.999, '925': 0.925, '800': 0.800 },
     },
     coursOr: [],               // { id, date, cours_mad_g, vendeur, quantite_g, valide, created_at }
-    coursArgent: [],           // { id, date, cours_mad_g, vendeur, quantite_g, valide, created_at }
     clients: [],               // { id, nom, telephone, bijouterie, tarif_prestation, created_at }
     commandes: [],             // { id, client_id, type, poids_or_g, purete, pierres, taille, date_depot_or, date_livraison_prevue, date_livraison_effective, statut, tarif_prestation, type_metal, prix_modele_3d_mad, honoraires_mad, or_prete_g, piece_id, notes, created_at }
     stock: {
@@ -155,7 +153,6 @@ const BijoutierStore = (() => {
     try {
       const toSave = {
         coursOr: _state.coursOr,
-        coursArgent: _state.coursArgent,
         clients: _state.clients,
         commandes: _state.commandes,
         stock: _state.stock,
@@ -182,7 +179,6 @@ const BijoutierStore = (() => {
 
       const data = JSON.parse(saved);
       if (data.coursOr) _state.coursOr = data.coursOr;
-      if (data.coursArgent) _state.coursArgent = data.coursArgent;
       if (data.clients) _state.clients = data.clients;
       if (data.commandes) _state.commandes = data.commandes;
       if (data.stock) _state.stock = data.stock;
@@ -206,7 +202,6 @@ const BijoutierStore = (() => {
 
   function clearAll() {
     _state.coursOr = [];
-    _state.coursArgent = [];
     _state.clients = [];
     _state.commandes = [];
     _state.stock = { propre: [], client: [], atelier: [] };
@@ -284,7 +279,6 @@ const BijoutierStore = (() => {
   function _countItems() {
     return {
       coursOr: _state.coursOr.length,
-      coursArgent: _state.coursArgent.length,
       clients: _state.clients.length,
       commandes: _state.commandes.length,
       balayures: _state.balayures.length,

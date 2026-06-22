@@ -467,6 +467,56 @@ body {
 <body>
 <div id="app">
 <div class="phone-shell">
+  <div id="login-screen">
+    <div style="padding:34px 20px 20px;text-align:center;">
+      <div class="logo-icon" style="width:56px;height:56px;font-size:28px;margin:0 auto 12px;">💎</div>
+      <div class="app-name" style="font-size:20px;color:var(--gold);">Bijoutier Pro</div>
+      <p class="text-muted" style="margin-top:4px;">Choisissez votre profil</p>
+    </div>
+    <div style="padding:0 20px;">
+      <div id="role-buttons">
+        <button class="nm-btn nm-btn-gold" style="width:100%;padding:14px;margin-bottom:10px;font-size:14px;" onclick="showRoleForm('admin')">👑 Administrateur</button>
+        <button class="nm-btn" style="width:100%;padding:14px;margin-bottom:10px;font-size:14px;" onclick="showRoleForm('chef')">🛠️ Chef d'atelier</button>
+        <button class="nm-btn" style="width:100%;padding:14px;font-size:14px;" onclick="showRoleForm('artisan')">🔨 Artisan</button>
+      </div>
+
+      <div id="role-form-admin" class="hidden nm-card" style="margin-top:14px;">
+        <p class="section-title">Administrateur</p>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input class="nm-input" type="password" id="login-admin-pwd">
+        </div>
+        <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="loginAdmin()">Se connecter</button>
+        <p id="login-admin-error" style="font-size:12px;color:var(--danger);margin-top:6px;"></p>
+      </div>
+
+      <div id="role-form-chef" class="hidden nm-card" style="margin-top:14px;">
+        <p class="section-title">Chef d'atelier</p>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input class="nm-input" type="password" id="login-chef-pwd">
+        </div>
+        <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="loginChef()">Se connecter</button>
+        <p id="login-chef-error" style="font-size:12px;color:var(--danger);margin-top:6px;"></p>
+      </div>
+
+      <div id="role-form-artisan" class="hidden nm-card" style="margin-top:14px;">
+        <p class="section-title">Artisan</p>
+        <div class="form-group">
+          <label class="form-label">Votre nom</label>
+          <select class="nm-select" id="login-artisan-select"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Code PIN</label>
+          <input class="nm-input" type="password" inputmode="numeric" maxlength="4" id="login-artisan-pin">
+        </div>
+        <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="loginArtisan()">Se connecter</button>
+        <p id="login-artisan-error" style="font-size:12px;color:var(--danger);margin-top:6px;"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-app" class="hidden">
   <div class="status-bar">
     <span>9:41</span>
     <span style="color:#C9A84C;font-size:12px;">⬤ 5G</span>
@@ -485,6 +535,7 @@ body {
           <span id="offline-label" style="font-size:11px;font-weight:500;color:#1a7a4a;">En ligne</span>
         </button>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Basculer thème"></button>
+        <button class="nm-btn" style="font-size:11px;padding:5px 10px;" onclick="logout()">⏏</button>
       </div>
     </div>
     <div class="gold-ticker">
@@ -513,6 +564,16 @@ body {
           </div>
           <div id="dash-sync-badge" class="chip chip-green">Sync ✓</div>
         </div>
+      </div>
+
+      <!-- Chiffre d'affaires -->
+      <div class="nm-card">
+        <p class="section-title">Chiffre d'affaires</p>
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-val" id="dash-ca-total">—</div><div class="stat-lbl">Total cumulé</div></div>
+          <div class="stat-box"><div class="stat-val" id="dash-ca-mois">—</div><div class="stat-lbl">Ce mois</div></div>
+        </div>
+        <div id="dash-ca-par-client"></div>
       </div>
 
       <!-- Dépôts du jour -->
@@ -590,6 +651,16 @@ body {
           <span class="chip chip-red">Upload</span>
         </div>
       </div>
+    </div>
+
+    <!-- TAB ARTISAN (vue dédiée, sans navigation, sans BDD clients ni cours) -->
+    <div class="tab-content" id="tab-artisan-ledger">
+      <div class="nm-card" style="text-align:center;">
+        <div class="card-title" id="artisan-ledger-nom">—</div>
+        <div class="text-muted">Mes entrées / sorties (grammes)</div>
+      </div>
+      <div id="artisan-ledger-jours"></div>
+      <button class="nm-btn" style="width:100%;padding:10px;margin-top:6px;" onclick="logout()">⏏ Déconnexion</button>
     </div>
 
     <!-- TAB ADMIN (anciens Arch + Réseau fusionnés, accès admin) -->
@@ -1109,6 +1180,7 @@ body {
               <span class="section-title" style="margin-bottom:0;">Pipeline atelier</span>
               <button class="nm-btn" style="font-size:11px;padding:6px 10px;" onclick="actionAcheterOr()">+ Achat or</button>
             </div>
+            <div class="text-muted" id="atelier-tdb-summary" style="margin-top:6px;"></div>
           </div>
           <div id="atelier-pieces-list"></div>
         </div>
@@ -1190,6 +1262,7 @@ body {
       <span class="nav-label">Admin</span>
     </button>
   </div>
+  </div>
 </div>
 </div>
 
@@ -1205,6 +1278,11 @@ BijoutierStore.on('coursOr:added', () => { if (typeof renderTresor === 'function
 
 renderClientsListe();
 
+// Reprise de session (mémoire de l'onglet en cours uniquement)
+const _savedRole = sessionStorage.getItem('bijoutier_role');
+if (_savedRole) {
+  enterApp(_savedRole, sessionStorage.getItem('bijoutier_artisan_id') || null);
+}
 
 let COURS_ACTIF = 642;
 let isOffline = false;
@@ -1580,6 +1658,15 @@ function renderAtelierListe() {
     .filter(p => !['livree_client', 'retour_coffre_final', 'annulee'].includes(p.statut))
     .sort((a, b) => STATUT_ORDER.indexOf(a.statut) - STATUT_ORDER.indexOf(b.statut));
 
+  const summaryEl = document.getElementById('atelier-tdb-summary');
+  if (summaryEl) {
+    const chezArtisan = pieces.filter(p => p.statut === 'chez_artisan').length;
+    const enAttente = pieces.filter(p => p.statut === 'en_attente_chef_atelier').length;
+    summaryEl.textContent = pieces.length
+      ? `${pieces.length} pièce${pieces.length !== 1 ? 's' : ''} en cours · ${chezArtisan} chez artisan · ${enAttente} en attente`
+      : 'Aucune pièce en cours';
+  }
+
   if (pieces.length === 0) {
     cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucune pièce en cours dans l\'atelier</p>';
     return;
@@ -1816,6 +1903,172 @@ function renderTresor() {
     const sens = ['entree_propre', 'balayure', 'raffinage', 'depot_client'].includes(m.type) ? '+' : '−';
     return `<div class="depot-row"><div><span class="depot-date">${m.date}</span> · ${m.type}</div><div class="depot-amount">${sens}${m.poids_g}g ${m.purete}</div></div>`;
   }).join('') : '<p class="text-muted">Aucun mouvement</p>';
+}
+
+// ─── Authentification par rôle (PIN/mot de passe simples — outil interne, pas de vrai backend auth) ───
+const ROLE_PASSWORDS = { admin: '1234', chef: '5678' };
+let CURRENT_ROLE = null;
+let CURRENT_ARTISAN_ID = null;
+
+function showRoleForm(role) {
+  ['admin', 'chef', 'artisan'].forEach(r => {
+    document.getElementById('role-form-' + r).classList.toggle('hidden', r !== role);
+  });
+  if (role === 'artisan') {
+    document.getElementById('login-artisan-select').innerHTML = ArtisanService.getAll()
+      .filter(a => a.actif)
+      .map(a => `<option value="${a.id}">${a.nom}</option>`).join('');
+  }
+}
+
+function loginAdmin() {
+  const pwd = document.getElementById('login-admin-pwd').value;
+  if (pwd !== ROLE_PASSWORDS.admin) {
+    document.getElementById('login-admin-error').textContent = 'Mot de passe incorrect';
+    return;
+  }
+  enterApp('admin');
+}
+
+function loginChef() {
+  const pwd = document.getElementById('login-chef-pwd').value;
+  if (pwd !== ROLE_PASSWORDS.chef) {
+    document.getElementById('login-chef-error').textContent = 'Mot de passe incorrect';
+    return;
+  }
+  enterApp('chef');
+}
+
+function loginArtisan() {
+  const artisanId = document.getElementById('login-artisan-select').value;
+  const pin = document.getElementById('login-artisan-pin').value;
+  const artisan = ArtisanService.getById(artisanId);
+  if (!artisan || artisan.pin !== pin) {
+    document.getElementById('login-artisan-error').textContent = 'PIN incorrect';
+    return;
+  }
+  enterApp('artisan', artisanId);
+}
+
+function enterApp(role, artisanId) {
+  CURRENT_ROLE = role;
+  CURRENT_ARTISAN_ID = artisanId || null;
+  sessionStorage.setItem('bijoutier_role', role);
+  if (artisanId) sessionStorage.setItem('bijoutier_artisan_id', artisanId);
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  applyRoleScope(role, artisanId);
+}
+
+function logout() {
+  CURRENT_ROLE = null;
+  CURRENT_ARTISAN_ID = null;
+  sessionStorage.removeItem('bijoutier_role');
+  sessionStorage.removeItem('bijoutier_artisan_id');
+  document.getElementById('main-app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  ['admin', 'chef', 'artisan'].forEach(r => document.getElementById('role-form-' + r).classList.add('hidden'));
+  document.getElementById('login-admin-pwd').value = '';
+  document.getElementById('login-chef-pwd').value = '';
+  document.getElementById('login-artisan-pin').value = '';
+  document.getElementById('login-admin-error').textContent = '';
+  document.getElementById('login-chef-error').textContent = '';
+  document.getElementById('login-artisan-error').textContent = '';
+}
+
+function applyRoleScope(role, artisanId) {
+  const mainApp = document.getElementById('main-app');
+
+  if (role === 'admin') {
+    mainApp.querySelector('.app-header').classList.remove('hidden');
+    mainApp.querySelector('.bottom-nav').classList.remove('hidden');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('hidden'));
+    document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('hidden'));
+    switchTab('dashboard');
+    renderDashboardCA();
+    return;
+  }
+
+  if (role === 'chef') {
+    mainApp.querySelector('.app-header').classList.remove('hidden');
+    mainApp.querySelector('.bottom-nav').classList.remove('hidden');
+    document.getElementById('nav-dashboard').classList.add('hidden');
+    document.getElementById('nav-admin').classList.add('hidden');
+    document.querySelectorAll('#tab-base .sub-tabs .sub-tab').forEach(btn => {
+      btn.classList.toggle('hidden', btn.textContent.trim() !== 'Clients');
+    });
+    document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
+      btn.classList.toggle('hidden', !['Cours or', 'Atelier'].includes(btn.textContent.trim()));
+    });
+    switchTab('base');
+    const atelierBtn = Array.from(document.querySelectorAll('#tab-metier .sub-tab')).find(b => b.textContent.trim() === 'Atelier');
+    if (atelierBtn) switchMetierTab('atelier', atelierBtn);
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-base').classList.add('active');
+    return;
+  }
+
+  if (role === 'artisan') {
+    mainApp.querySelector('.app-header').classList.add('hidden');
+    mainApp.querySelector('.bottom-nav').classList.add('hidden');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-artisan-ledger').classList.add('active');
+    renderArtisanLedger(artisanId);
+  }
+}
+
+// ─── Vue Artisan (grand-livre journalier, grammes purs, sans aucun autre contexte) ───
+function renderArtisanLedger(artisanId) {
+  const artisan = ArtisanService.getById(artisanId);
+  document.getElementById('artisan-ledger-nom').textContent = artisan ? artisan.nom : '—';
+
+  const mvts = BijoutierStore.query('stock_atelier', m => m.artisan_id === artisanId);
+  const parJour = {};
+  mvts.forEach(m => {
+    if (!parJour[m.date]) parJour[m.date] = { recu: 0, rendu: 0, delta: 0 };
+    if (m.type === 'entree_artisan') parJour[m.date].recu += m.poids_g;
+    if (m.type === 'sortie_artisan') {
+      parJour[m.date].rendu += m.poids_g;
+      parJour[m.date].delta += (m.poids_perte_g || 0);
+    }
+  });
+
+  const jours = Object.keys(parJour).sort((a, b) => new Date(b) - new Date(a));
+  const cont = document.getElementById('artisan-ledger-jours');
+  cont.innerHTML = jours.length ? jours.map(date => {
+    const j = parJour[date];
+    const signeClass = j.delta > 0 ? 'var-up' : (j.delta < 0 ? 'var-down' : '');
+    const signe = j.delta > 0 ? '+' : '';
+    return `<div class="nm-card" style="padding:10px 12px;">
+      <div class="text-muted" style="margin-bottom:4px;">${date}</div>
+      <div class="stat-row" style="margin-bottom:0;">
+        <div class="stat-box"><div class="stat-val">${j.recu.toFixed(2)}g</div><div class="stat-lbl">Reçu</div></div>
+        <div class="stat-box"><div class="stat-val">${j.rendu.toFixed(2)}g</div><div class="stat-lbl">Rendu</div></div>
+      </div>
+      <div style="text-align:center;margin-top:6px;font-weight:600;" class="${signeClass}">Δ ${signe}${j.delta.toFixed(2)}g</div>
+    </div>`;
+  }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun mouvement enregistré</p>';
+}
+
+// ─── Dashboard Admin : CA par client + total (lecture pure via CAService/ClientService) ───
+function renderDashboardCA() {
+  const totalEl = document.getElementById('dash-ca-total');
+  const moisEl = document.getElementById('dash-ca-mois');
+  const listEl = document.getElementById('dash-ca-par-client');
+  if (!totalEl || !listEl) return;
+
+  const resume = CAService.resume();
+  totalEl.textContent = resume.total.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
+  moisEl.textContent = resume.mois.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
+
+  const lignes = ClientService.getAll()
+    .map(c => ({ client: c, ca: CAService.parClient(c.id) }))
+    .filter(l => l.ca > 0)
+    .sort((a, b) => b.ca - a.ca);
+
+  listEl.innerHTML = lignes.length ? lignes.map(l => `
+    <div class="depot-row"><div>${l.client.nom}</div><div class="depot-mad">${l.ca.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div></div>
+  `).join('') : '<p class="text-muted" style="margin-top:6px;">Aucune commande livrée pour l\'instant</p>';
 }
 </script>
 </body>

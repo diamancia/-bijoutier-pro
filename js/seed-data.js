@@ -16,15 +16,10 @@ const SEED_DATA = {
     { id: 'cor_003', date: '2026-06-05', cours_mad_g: 635, vendeur: 'Négoce Atlas', quantite_g: 20, valide: true, created_at: '2026-06-05T08:00:00Z' },
   ],
 
-  coursArgent: [
-    { id: 'cag_001', date: '2026-06-19', cours_mad_g: 8.5, vendeur: 'Al Waha', quantite_g: 200, valide: true, created_at: '2026-06-19T08:05:00Z' },
-    { id: 'cag_002', date: '2026-06-12', cours_mad_g: 8.3, vendeur: 'Souk central', quantite_g: 150, valide: true, created_at: '2026-06-12T08:05:00Z' },
-  ],
-
   artisans: [
-    { id: 'arn_001', nom: 'Karim Ezzahiri', competences: ['préparation', 'pré-polissage'], telephone: '0662 111 222', actif: true, created_at: '2026-01-05T00:00:00Z' },
-    { id: 'arn_002', nom: 'Samira Bensouda', competences: ['sertissage'], telephone: '0663 333 444', actif: true, created_at: '2026-01-05T00:00:00Z' },
-    { id: 'arn_003', nom: 'Omar Idrissi', competences: ['gravure', 'sertissage'], telephone: '0664 555 666', actif: true, created_at: '2026-02-01T00:00:00Z' },
+    { id: 'arn_001', nom: 'Karim Ezzahiri', competences: ['préparation', 'pré-polissage'], telephone: '0662 111 222', pin: '1111', actif: true, created_at: '2026-01-05T00:00:00Z' },
+    { id: 'arn_002', nom: 'Samira Bensouda', competences: ['sertissage'], telephone: '0663 333 444', pin: '2222', actif: true, created_at: '2026-01-05T00:00:00Z' },
+    { id: 'arn_003', nom: 'Omar Idrissi', competences: ['gravure', 'sertissage'], telephone: '0664 555 666', pin: '3333', actif: true, created_at: '2026-02-01T00:00:00Z' },
   ],
 
   clients: [

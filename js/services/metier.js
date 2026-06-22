@@ -49,34 +49,11 @@ const CoursService = {
     return poids_g * cours * facteur;
   },
 
-  // ─── Cours de l'argent (symétrique à l'or) ───
-  getCoursActifArgent() {
-    const validés = BijoutierStore.query('coursArgent', c => c.valide)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-    return validés.length > 0 ? validés[0] : null;
-  },
-
-  getCoursArgent() {
-    const cours = this.getCoursActifArgent();
-    return cours ? cours.cours_mad_g : 0;
-  },
-
-  ajouterCoursArgent(data) {
-    return BijoutierStore.add('coursArgent', data);
-  },
-
-  validerCoursArgent(id) {
-    return BijoutierStore.update('coursArgent', id, { valide: true });
-  },
-
-  // Convertit un poids d'argent en équivalent-or (en grammes), via la valeur MAD des deux métaux
-  convertirArgentEnOr(poidsArgentG, pureteArgent = '925') {
-    if (!poidsArgentG) return 0;
-    const config = BijoutierStore.getConfig();
-    const facteurArgent = config.puretésArgent[pureteArgent] || 1;
-    const valeurMad = poidsArgentG * this.getCoursArgent() * facteurArgent;
-    const coursOrActuel = this.getCours();
-    return coursOrActuel > 0 ? valeurMad / coursOrActuel : 0;
+  // « argent » désigne un paiement en cash (pas le métal) : simple conversion MAD → équivalent-or
+  convertirCashEnOr(montantMad) {
+    if (!montantMad) return 0;
+    const cours = this.getCours();
+    return cours > 0 ? montantMad / cours : 0;
   },
 };
 
@@ -164,9 +141,9 @@ const CommandeService = {
     const honoraires = data.honoraires_mad != null ? data.honoraires_mad : client.tarif_prestation;
     const prixModele = data.prix_modele_3d_mad || 0;
 
-    // Règle module 1 : si argent → conversion en or (système entièrement basé sur l'équivalent-or)
+    // Règle module 1 : si argent (= paiement cash) → conversion en équivalent-or au cours actif
     const poidsOrEquivalent = typeMetal === 'argent'
-      ? CoursService.convertirArgentEnOr(data.poids_or_g, data.purete_argent || '925')
+      ? CoursService.convertirCashEnOr(data.montant_cash_mad || 0)
       : data.poids_or_g;
 
     // Poids nécessaire à la fabrication de la pièce (peut dépasser ce que le client a apporté)
@@ -175,7 +152,7 @@ const CommandeService = {
     const commande = BijoutierStore.add('commandes', {
       client_id: data.client_id,
       type: data.type,
-      poids_or_g: data.poids_or_g,
+      poids_or_g: poidsOrEquivalent,
       purete,
       pierres: data.pierres || 'Sans pierres',
       taille: data.taille || '',

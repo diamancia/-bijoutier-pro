@@ -98,20 +98,19 @@ function runP02Harness() {
   console.groupEnd();
 
   // ═══════════════════════════════════════════
-  // 2. Commande argent avec or insuffisant → complément coffre
+  // 2. Commande payée en cash (« argent ») avec or insuffisant → complément coffre
   // ═══════════════════════════════════════════
-  console.group("2. Commande argent + or insuffisant (complément via coffre)");
+  console.group("2. Commande cash + or insuffisant (complément via coffre)");
 
   const soldeCoffreAvant = CoffreService.getTotalOr();
 
   const cmd2 = CommandeService.creer({
     client_id: 'cli_004',
     type: 'Collier',
-    poids_or_g: 50,              // grammes d'argent déposés par le client
+    montant_cash_mad: 300,        // paiement cash du client, converti en équivalent-or au cours actif
     type_metal: 'argent',
-    purete_argent: '925',
     purete: '18K',
-    poids_necessaire_g: 2,        // la pièce nécessite 2g-or, largement au-dessus de l'équivalent argent déposé
+    poids_necessaire_g: 2,        // la pièce nécessite 2g-or, largement au-dessus de l'équivalent cash payé
     date_depot_or: '2026-06-21',
     date_livraison_prevue: '2026-07-05',
     prix_modele_3d_mad: 150,
