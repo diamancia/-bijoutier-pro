@@ -9,6 +9,9 @@
   --gold: #C9A84C;
   --gold-light: #E8C96A;
   --gold-dark: #8B6914;
+  --olive: #b5cc2e;
+  --olive-light: #d6e87a;
+  --olive-dark: #7d8f1d;
   --nm-bg: #e8e5de;
   --nm-bg-dark: #1e1c18;
   --accent: #C9A84C;
@@ -48,6 +51,10 @@ body {
   background: var(--nm-bg-dark);
   box-shadow: 6px 6px 16px #0a0908, -6px -6px 16px #2e2b24;
 }
+
+/* L'app occupe toute la hauteur du shell -> bottom-nav toujours collée en bas */
+#main-app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+#login-screen { flex: 1; }
 
 .dark { --nm-bg: #1e1c18; --text: #e8e5de; --text-muted: #9a9080; }
 
@@ -185,6 +192,30 @@ body {
   color: #1a1713;
   box-shadow: 3px 3px 7px #8B6914, -3px -3px 7px #E8C96A;
 }
+.nm-btn-gold:active { box-shadow: inset 2px 2px 6px #8B6914, inset -2px -2px 6px #E8C96A; }
+
+.nm-btn-green {
+  background: var(--olive);
+  color: #1a1713;
+  box-shadow: 3px 3px 7px var(--olive-dark), -3px -3px 7px var(--olive-light);
+}
+.nm-btn-green:active { box-shadow: inset 2px 2px 6px var(--olive-dark), inset -2px -2px 6px var(--olive-light); }
+
+/* Camembert (part client) en dégradé conique */
+.pie-chart {
+  width: 150px; height: 150px; border-radius: 50%;
+  margin: 6px auto 12px;
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.18), -4px -4px 10px rgba(255,255,255,0.6);
+}
+.dark .pie-chart { box-shadow: 4px 4px 10px #0a0908, -4px -4px 10px #2e2b24; }
+.pie-legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+
+.recap-gain-pos { color: var(--success); font-weight: 700; }
+.recap-gain-neg { color: var(--danger); font-weight: 700; }
+
+/* Cases à cocher façon formulaire */
+.check-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+.check-box { width: 22px; height: 22px; accent-color: var(--olive); }
 
 .nm-input {
   width: 100%;
@@ -795,8 +826,9 @@ body {
       <div id="sub-commandes" class="hidden">
         <div id="commande-list-view">
           <div id="commandes-list"></div>
-          <div style="margin-top:10px;">
-            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="showAddCommande()">+ Nouvelle commande</button>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button class="nm-btn nm-btn-gold" style="flex:1;padding:10px;" onclick="showAddCommande()">+ Commande</button>
+            <button class="nm-btn nm-btn-green" style="flex:1;padding:10px;" onclick="showCamembert()">📊 Part clients</button>
           </div>
         </div>
 
@@ -824,7 +856,63 @@ body {
               <div class="form-label">Timeline</div>
               <div id="cmd-det-timeline" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
             </div>
-            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:10px;" id="cmd-det-livrer-btn" onclick="livrerCommandeActuelle()">📦 Marquer comme livrée</button>
+
+            <!-- Récap livraison (affiché une fois livrée) -->
+            <div class="nm-inset" id="cmd-det-recap" style="margin-top:8px;display:none;">
+              <div class="form-label">Récap livraison</div>
+              <div class="depot-row" style="border:none;padding:4px 0;"><span>Entrée commande</span><span class="depot-amount" id="recap-entree">—</span></div>
+              <div class="depot-row" style="border:none;padding:4px 0;"><span>Livraison</span><span class="depot-amount" id="recap-livraison">—</span></div>
+              <div class="depot-row" style="border:none;padding:4px 0;"><span style="font-weight:600;">Gain / perte</span><span id="recap-gain">—</span></div>
+            </div>
+
+            <!-- Cases à cocher -->
+            <div class="nm-inset" style="margin-top:8px;">
+              <div class="check-row">
+                <span style="font-size:13px;color:var(--text);">Réglé</span>
+                <input type="checkbox" class="check-box" id="cmd-det-regle" onchange="toggleRegle()">
+              </div>
+              <div class="check-row" style="padding-bottom:0;">
+                <span style="font-size:13px;color:var(--text);">Poinçon douane</span>
+                <input type="checkbox" class="check-box" id="cmd-det-poincon" onchange="togglePoincon()">
+              </div>
+            </div>
+
+            <!-- Saisie poids livré + livraison -->
+            <div id="cmd-det-livraison-zone" style="margin-top:10px;">
+              <div class="form-group">
+                <label class="form-label">Poids livré (g)</label>
+                <input class="nm-input" type="number" id="cmd-det-poids-livre" placeholder="poids du bijou fini">
+              </div>
+              <button class="nm-btn nm-btn-green" style="width:100%;padding:10px;" id="cmd-det-livrer-btn" onclick="livrerCommandeActuelle()">📦 Marquer comme livrée</button>
+            </div>
+
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:10px;" onclick="showRecapClient()">📋 Total commandes du client</button>
+          </div>
+        </div>
+
+        <!-- Récap commandes du client par catégorie -->
+        <div id="recap-client-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandeDetail()">← Retour</button>
+          <div class="nm-card">
+            <div class="card-title" id="recap-client-nom">—</div>
+            <div class="stat-row" style="margin-top:8px;">
+              <div class="stat-box"><div class="stat-val" id="recap-client-nb">—</div><div class="stat-lbl">Commandes</div></div>
+              <div class="stat-box"><div class="stat-val" id="recap-client-poids">—</div><div class="stat-lbl">Poids total (g)</div></div>
+            </div>
+          </div>
+          <div class="nm-card">
+            <p class="section-title">Par catégorie</p>
+            <div id="recap-client-categories"></div>
+          </div>
+        </div>
+
+        <!-- Camembert : part de chaque client (% et grammes) -->
+        <div id="camembert-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+          <div class="nm-card">
+            <p class="section-title">Part de chaque client (volume or)</p>
+            <div class="pie-chart" id="camembert-pie"></div>
+            <div id="camembert-legende"></div>
           </div>
         </div>
 
@@ -1794,45 +1882,129 @@ function renderCommandesListe() {
   }).join('');
 }
 
+function hideAllCommandeViews() {
+  ['commande-list-view','commande-detail-view','add-commande-view','recap-client-view','camembert-view']
+    .forEach(id => document.getElementById(id).classList.add('hidden'));
+}
+
 function showCommandeDetail(id) {
   _commandeDetailId = id;
-  document.getElementById('commande-list-view').classList.add('hidden');
-  document.getElementById('add-commande-view').classList.add('hidden');
+  hideAllCommandeViews();
   document.getElementById('commande-detail-view').classList.remove('hidden');
 
   const cmd = CommandeService.getById(id);
   const client = ClientService.getById(cmd.client_id);
   const jours = CommandeService.getJoursRestants(cmd);
   const niveau = CommandeService.getNiveauAlerte(cmd);
+  const livree = cmd.statut === 'livree';
 
   document.getElementById('cmd-det-type').textContent = `${cmd.type} · ${cmd.poids_or_g}g ${cmd.purete}`;
   document.getElementById('cmd-det-client').textContent = client ? `${client.nom} · ${client.telephone}` : '—';
   document.getElementById('cmd-det-poids').textContent = cmd.poids_or_g + 'g';
-  document.getElementById('cmd-det-jours').textContent = cmd.statut === 'livree' ? '—' : (jours + 'j');
+  document.getElementById('cmd-det-jours').textContent = livree ? '—' : (jours + 'j');
 
-  const badgeEl = document.getElementById('cmd-det-badge');
-  badgeEl.innerHTML = cmd.statut === 'livree'
+  document.getElementById('cmd-det-badge').innerHTML = livree
     ? '<span class="chip chip-green">Livrée</span>'
     : (alerteBadgeHtml(niveau, jours) || '<span class="chip chip-green">En cours</span>');
 
   document.getElementById('cmd-det-timeline').innerHTML = `
     <div>📥 Dépôt or : ${cmd.date_depot_or}</div>
     <div>📅 Livraison prévue : ${cmd.date_livraison_prevue}</div>
-    <div>${cmd.statut === 'livree' ? '✅ Livrée le ' + cmd.date_livraison_effective : '⏳ En cours'}</div>
+    <div>${livree ? '✅ Livrée le ' + cmd.date_livraison_effective : '⏳ En cours'}</div>
   `;
 
-  document.getElementById('cmd-det-livrer-btn').style.display = cmd.statut === 'livree' ? 'none' : 'block';
+  // Cases à cocher
+  document.getElementById('cmd-det-regle').checked = !!cmd.regle;
+  document.getElementById('cmd-det-poincon').checked = !!cmd.poincon_douane;
+
+  // Récap livraison (entrée / livraison / gain) — visible une fois livrée
+  const recap = document.getElementById('cmd-det-recap');
+  if (livree) {
+    const livre = cmd.poids_livraison_g != null ? cmd.poids_livraison_g : cmd.poids_or_g;
+    const gain = cmd.gain_g != null ? cmd.gain_g : (livre - cmd.poids_or_g);
+    document.getElementById('recap-entree').textContent = cmd.poids_or_g + ' g';
+    document.getElementById('recap-livraison').textContent = livre + ' g';
+    const gainEl = document.getElementById('recap-gain');
+    gainEl.textContent = (gain >= 0 ? '+' : '') + gain.toFixed(2) + ' g';
+    gainEl.className = gain >= 0 ? 'recap-gain-pos' : 'recap-gain-neg';
+    recap.style.display = 'block';
+    document.getElementById('cmd-det-livraison-zone').style.display = 'none';
+  } else {
+    recap.style.display = 'none';
+    document.getElementById('cmd-det-livraison-zone').style.display = 'block';
+    document.getElementById('cmd-det-poids-livre').value = cmd.poids_or_g;
+  }
+}
+
+function toggleRegle() {
+  if (!_commandeDetailId) return;
+  CommandeService.setRegle(_commandeDetailId, document.getElementById('cmd-det-regle').checked);
+}
+
+function togglePoincon() {
+  if (!_commandeDetailId) return;
+  CommandeService.setPoinconDouane(_commandeDetailId, document.getElementById('cmd-det-poincon').checked);
+}
+
+function showRecapClient() {
+  const cmd = CommandeService.getById(_commandeDetailId);
+  if (!cmd) return;
+  const client = ClientService.getById(cmd.client_id);
+  const recap = CommandeService.getRecapClient(cmd.client_id);
+  hideAllCommandeViews();
+  document.getElementById('recap-client-view').classList.remove('hidden');
+  document.getElementById('recap-client-nom').textContent = client ? client.nom : '—';
+  document.getElementById('recap-client-nb').textContent = recap.total_commandes;
+  document.getElementById('recap-client-poids').textContent = recap.total_poids_g.toFixed(1) + 'g';
+  document.getElementById('recap-client-categories').innerHTML = recap.categories.map(c => `
+    <div class="depot-row"><div><span class="depot-amount">${c.nombre}× ${c.type}</span></div><div class="depot-mad">${c.poids_total_g.toFixed(1)} g</div></div>
+  `).join('');
+}
+
+function backToCommandeDetail() {
+  if (_commandeDetailId) showCommandeDetail(_commandeDetailId);
+  else backToCommandesListe();
+}
+
+function showCamembert() {
+  hideAllCommandeViews();
+  document.getElementById('camembert-view').classList.remove('hidden');
+  renderCamembert();
+}
+
+function renderCamembert() {
+  const repartition = CommandeService.repartitionGrammesParClient();
+  const pie = document.getElementById('camembert-pie');
+  const legende = document.getElementById('camembert-legende');
+  if (!repartition.length) {
+    pie.style.background = 'var(--nm-bg)';
+    legende.innerHTML = '<p class="text-muted">Aucune commande</p>';
+    return;
+  }
+  const palette = ['#C9A84C', '#b5cc2e', '#8B6914', '#7d8f1d', '#E8C96A', '#d6e87a', '#3a2a6e', '#1a7a4a'];
+  let acc = 0;
+  const segments = repartition.map((r, i) => {
+    const start = acc;
+    acc += r.pourcent;
+    return `${palette[i % palette.length]} ${start.toFixed(2)}% ${acc.toFixed(2)}%`;
+  });
+  pie.style.background = `conic-gradient(${segments.join(', ')})`;
+  legende.innerHTML = repartition.map((r, i) => `
+    <div class="depot-row">
+      <div style="display:flex;align-items:center;gap:8px;"><span class="pie-legend-dot" style="background:${palette[i % palette.length]};"></span>${r.client.nom}</div>
+      <div><span class="depot-mad">${r.pourcent.toFixed(1)}%</span> <span class="text-muted">· ${r.grammes.toFixed(1)} g</span></div>
+    </div>
+  `).join('');
 }
 
 function backToCommandesListe() {
+  hideAllCommandeViews();
   document.getElementById('commande-list-view').classList.remove('hidden');
-  document.getElementById('commande-detail-view').classList.add('hidden');
-  document.getElementById('add-commande-view').classList.add('hidden');
   renderCommandesListe();
 }
 
 function showAddCommande() {
-  document.getElementById('commande-list-view').classList.add('hidden');
+  hideAllCommandeViews();
   document.getElementById('add-commande-view').classList.remove('hidden');
   document.getElementById('cmd-add-client').innerHTML = ClientService.getAll()
     .map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
@@ -1864,7 +2036,8 @@ function submitAddCommande() {
 
 function livrerCommandeActuelle() {
   if (!_commandeDetailId) return;
-  CommandeService.livrer(_commandeDetailId);
+  const poidsLivre = parseFloat(document.getElementById('cmd-det-poids-livre').value);
+  CommandeService.livrer(_commandeDetailId, isNaN(poidsLivre) ? null : poidsLivre);
   showCommandeDetail(_commandeDetailId);
 }
 

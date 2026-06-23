@@ -236,21 +236,25 @@ const CommandeService = {
     return BijoutierStore.getById('commandes', commande.id);
   },
 
-  livrer(id) {
+  // poidsLivraison : poids effectif du bijou livré (défaut = poids déposé). Le gain (±g) en découle.
+  livrer(id, poidsLivraison = null) {
     const cmd = this.getById(id);
     if (!cmd || cmd.statut !== 'en_cours') return null;
 
     const today = new Date().toISOString().split('T')[0];
+    const poidsLivre = poidsLivraison != null ? poidsLivraison : cmd.poids_or_g;
     const updated = BijoutierStore.update('commandes', id, {
       statut: 'livree',
       date_livraison_effective: today,
+      poids_livraison_g: poidsLivre,
+      gain_g: poidsLivre - cmd.poids_or_g,
     });
 
     // Mouvement stock client : sortie
     StockService.mouvementer({
       type: 'sortie_client',
       categorie: 'client',
-      poids_g: cmd.poids_or_g,
+      poids_g: poidsLivre,
       purete: cmd.purete,
       source: `Livraison ${cmd.id}`,
       client_id: cmd.client_id,
@@ -260,7 +264,7 @@ const CommandeService = {
     // Snapshot caisse
     CaisseService.snapshot({
       type_transaction: 'Livraison commande',
-      poids_g: cmd.poids_or_g,
+      poids_g: poidsLivre,
       montant_mad: cmd.tarif_prestation,
       commande_id: cmd.id,
       client_id: cmd.client_id,
@@ -268,6 +272,41 @@ const CommandeService = {
     });
 
     return updated;
+  },
+
+  setRegle(id, valeur) {
+    return BijoutierStore.update('commandes', id, { regle: !!valeur });
+  },
+
+  setPoinconDouane(id, valeur) {
+    return BijoutierStore.update('commandes', id, { poincon_douane: !!valeur });
+  },
+
+  // Récap des commandes d'un client groupées par catégorie (nb + poids total)
+  getRecapClient(clientId) {
+    const cmds = BijoutierStore.query('commandes', c => c.client_id === clientId);
+    const parType = {};
+    cmds.forEach(c => {
+      if (!parType[c.type]) parType[c.type] = { type: c.type, nombre: 0, poids_total_g: 0 };
+      parType[c.type].nombre += 1;
+      parType[c.type].poids_total_g += (c.poids_or_g || 0);
+    });
+    return {
+      categories: Object.values(parType).sort((a, b) => b.nombre - a.nombre),
+      total_commandes: cmds.length,
+      total_poids_g: cmds.reduce((s, c) => s + (c.poids_or_g || 0), 0),
+    };
+  },
+
+  // Répartition du volume (grammes d'or) par client, avec part en %
+  repartitionGrammesParClient() {
+    const lignes = ClientService.getAll().map(c => {
+      const cmds = BijoutierStore.query('commandes', x => x.client_id === c.id);
+      const grammes = cmds.reduce((s, x) => s + (x.poids_or_g || 0), 0);
+      return { client: c, grammes };
+    }).filter(l => l.grammes > 0).sort((a, b) => b.grammes - a.grammes);
+    const total = lignes.reduce((s, l) => s + l.grammes, 0);
+    return lignes.map(l => ({ ...l, pourcent: total > 0 ? (l.grammes / total) * 100 : 0 }));
   },
 
   getJoursRestants(commande) {
