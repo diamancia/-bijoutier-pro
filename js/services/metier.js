@@ -241,18 +241,29 @@ const CommandeService = {
   },
 
   // poidsLivraison : poids effectif du bijou livré (défaut = poids déposé). Le gain (±g) en découle.
-  livrer(id, poidsLivraison = null) {
+  // detail (optionnel, saisi à la livraison) : { honoraires_mad, nb_articles, oujra_mode, oujra_articles, pierres_articles }
+  livrer(id, poidsLivraison = null, detail = null) {
     const cmd = this.getById(id);
     if (!cmd || cmd.statut !== 'en_cours') return null;
 
     const today = new Date().toISOString().split('T')[0];
     const poidsLivre = poidsLivraison != null ? poidsLivraison : cmd.poids_or_g;
-    const updated = BijoutierStore.update('commandes', id, {
+    const maj = {
       statut: 'livree',
       date_livraison_effective: today,
       poids_livraison_g: poidsLivre,
       gain_g: poidsLivre - cmd.poids_or_g,
-    });
+    };
+    // Oujra + détail articles saisis à la livraison
+    if (detail) {
+      maj.honoraires_mad = detail.honoraires_mad || 0;
+      maj.nb_articles = detail.nb_articles || 1;
+      maj.oujra_mode = detail.oujra_mode || 'uniforme';
+      maj.oujra_articles = detail.oujra_articles || [];
+      maj.pierres_articles = detail.pierres_articles || [];
+      if (detail.honoraires_mad) CreditService.chargerHonoraires(id, cmd.client_id, detail.honoraires_mad);
+    }
+    const updated = BijoutierStore.update('commandes', id, maj);
 
     // Mouvement stock client : sortie
     StockService.mouvementer({
