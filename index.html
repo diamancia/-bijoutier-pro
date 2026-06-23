@@ -802,9 +802,32 @@ body {
               </div>
             </div>
           </div>
-          <div class="nm-card">
-            <p class="section-title">Historique dépôts</p>
-            <div id="det-depots"></div>
+          <!-- Sous-onglets de la fiche client -->
+          <div class="sub-tabs">
+            <button class="sub-tab active" id="cli-tab-commandes" onclick="switchClientTab('commandes', this)">Commandes</button>
+            <button class="sub-tab" id="cli-tab-articles" onclick="switchClientTab('articles', this)">Articles</button>
+            <button class="sub-tab" id="cli-tab-galerie" onclick="switchClientTab('galerie', this)">Galerie</button>
+            <button class="sub-tab" id="cli-tab-depots" onclick="switchClientTab('depots', this)">Dépôts</button>
+          </div>
+
+          <div id="cli-pane-commandes">
+            <div id="cli-commandes-list"></div>
+            <button class="nm-btn nm-btn-gold nm-btn-lg" style="width:100%;margin-top:8px;" onclick="showAddCommandePourClient()"><span class="btn-ico">💍</span>Nouvelle commande</button>
+          </div>
+
+          <div id="cli-pane-articles" class="hidden">
+            <div class="nm-card" style="padding:10px 12px;"><div id="cli-articles-list"></div></div>
+          </div>
+
+          <div id="cli-pane-galerie" class="hidden">
+            <div class="gallery-grid" id="cli-galerie-grid"></div>
+          </div>
+
+          <div id="cli-pane-depots" class="hidden">
+            <div class="nm-card">
+              <p class="section-title">Historique dépôts</p>
+              <div id="det-depots"></div>
+            </div>
           </div>
         </div>
 
@@ -911,12 +934,44 @@ body {
           </div>
         </div>
 
-        <!-- Camembert : part de chaque client (% et grammes) -->
+        <!-- Analyse clients : camembert (part %) ou courbe d'évolution -->
         <div id="camembert-view" class="hidden">
           <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+
           <div class="nm-card">
-            <p class="section-title">Part de chaque client (volume or)</p>
-            <div class="pie-chart" id="camembert-pie"></div>
+            <div class="filter-tabs">
+              <button class="filter-tab active" id="ana-mode-pie" onclick="setAnaMode('pie', this)">📊 Camembert</button>
+              <button class="filter-tab" id="ana-mode-evo" onclick="setAnaMode('evo', this)">📈 Évolution</button>
+            </div>
+            <div class="filter-tabs">
+              <button class="filter-tab active" id="ana-metric-g" onclick="setAnaMetric('grammes', this)">Grammes</button>
+              <button class="filter-tab" id="ana-metric-ca" onclick="setAnaMetric('ca', this)">CA (MAD)</button>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Du</label>
+                <input class="nm-input" type="date" id="ana-debut" onchange="renderAnalyse()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Au</label>
+                <input class="nm-input" type="date" id="ana-fin" onchange="renderAnalyse()">
+              </div>
+            </div>
+            <details style="margin-bottom:8px;">
+              <summary style="font-size:12px;color:var(--gold);cursor:pointer;">Filtrer les clients</summary>
+              <div id="ana-client-filtre" style="margin-top:6px;"></div>
+            </details>
+          </div>
+
+          <div class="nm-card">
+            <div id="ana-pie-wrap">
+              <p class="section-title" id="ana-pie-title">Part de chaque client</p>
+              <div class="pie-chart" id="camembert-pie"></div>
+            </div>
+            <div id="ana-evo-wrap" style="display:none;">
+              <p class="section-title" id="ana-evo-title">Évolution sur la période</p>
+              <div id="ana-evo-chart"></div>
+            </div>
             <div id="camembert-legende"></div>
           </div>
         </div>
@@ -1863,9 +1918,12 @@ function renderClientsListe(filtre) {
   }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun client</p>';
 }
 
+let _clientDetailId = null;
+
 function showClientDetail(clientId) {
   const client = ClientService.getById(clientId);
   if (!client) return;
+  _clientDetailId = clientId;
   document.getElementById('client-list-view').classList.add('hidden');
   document.getElementById('add-client-view').classList.add('hidden');
   document.getElementById('client-detail-view').classList.remove('hidden');
@@ -1874,6 +1932,15 @@ function showClientDetail(clientId) {
   document.getElementById('det-name').textContent = client.nom;
   document.getElementById('det-phone').textContent = client.telephone || '—';
   document.getElementById('det-shop').textContent = client.bijouterie || '—';
+
+  // Onglet Commandes par défaut + rendu des 3 rubriques du client
+  document.querySelectorAll('#client-detail-view .sub-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('cli-tab-commandes').classList.add('active');
+  ['commandes','articles','galerie','depots'].forEach(p =>
+    document.getElementById('cli-pane-' + p).classList.toggle('hidden', p !== 'commandes'));
+  renderClientCommandes(clientId);
+  renderClientArticles(clientId);
+  renderClientGalerie(clientId);
 
   const depots = BijoutierStore.query('stock_client', m => m.client_id === clientId && m.type === 'depot_client')
     .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -1920,6 +1987,67 @@ function submitAddClient() {
 
 function filterClients() {
   renderClientsListe(document.getElementById('search-input').value);
+}
+
+// ─── Hub fiche client : Commandes / Articles / Galerie / Dépôts ───
+function switchClientTab(pane, btn) {
+  ['commandes','articles','galerie','depots'].forEach(p =>
+    document.getElementById('cli-pane-' + p).classList.toggle('hidden', p !== pane));
+  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function renderClientCommandes(clientId) {
+  const cmds = ClientService.getCommandes(clientId);
+  const cont = document.getElementById('cli-commandes-list');
+  cont.innerHTML = cmds.length ? cmds.map(cmd => {
+    const jours = CommandeService.getJoursRestants(cmd);
+    const niveau = CommandeService.getNiveauAlerte(cmd);
+    const badge = cmd.statut === 'livree'
+      ? '<span class="chip chip-green">Livrée</span>'
+      : (alerteBadgeHtml(niveau, jours) || '<span class="chip chip-green">En cours</span>');
+    return `<div class="client-row" onclick="showCommandeDetail('${cmd.id}')">
+      <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">${(cmd.type||'?').substring(0,2).toUpperCase()}</div>
+      <div class="client-info">
+        <div class="client-name">${cmd.type}</div>
+        <div class="client-meta">${cmd.poids_or_g}g · ${cmd.purete} · ${cmd.date_livraison_prevue}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('') : '<p class="text-muted" style="text-align:center;padding:12px 0;">Aucune commande</p>';
+}
+
+function renderClientArticles(clientId) {
+  // Articles fabriqués pour ce client = commandes livrées (bijou réalisé)
+  const livrees = BijoutierStore.query('commandes', c => c.client_id === clientId && c.statut === 'livree');
+  const cont = document.getElementById('cli-articles-list');
+  cont.innerHTML = livrees.length ? livrees.map(c => `
+    <div class="depot-row" style="font-size:13px;">
+      <div><strong>${c.type}</strong><br><span class="text-muted">${c.pierres || 'Sans pierres'} · ${c.taille || ''}</span></div>
+      <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">${(c.poids_livraison_g || c.poids_or_g)}g</span><br><span class="text-muted">${c.purete}</span></div>
+    </div>`).join('') : '<p class="text-muted" style="text-align:center;padding:8px 0;">Aucun article livré</p>';
+}
+
+function renderClientGalerie(clientId) {
+  const livrees = BijoutierStore.query('commandes', c => c.client_id === clientId && c.statut === 'livree');
+  const emojis = { Bague: '💍', Collier: '📿', Bracelet: '⭕', Boucles: '💎', Gourmette: '🔗' };
+  const grid = document.getElementById('cli-galerie-grid');
+  grid.innerHTML = livrees.length ? livrees.map(c => {
+    const key = Object.keys(emojis).find(k => (c.type || '').includes(k)) || 'Bague';
+    return `<div class="gallery-item">
+      <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#2c2820,#4a3820);">${emojis[key]}</div>
+      <div class="gallery-overlay"><div class="gallery-tag">${c.pierres || ''}</div><div class="gallery-weight">${(c.poids_livraison_g || c.poids_or_g)}g · ${c.taille || ''}</div></div>
+    </div>`;
+  }).join('') : '<p class="text-muted" style="grid-column:1/3;text-align:center;padding:12px 0;">Aucune pièce en galerie</p>';
+}
+
+function showAddCommandePourClient() {
+  const clientId = _clientDetailId;
+  // Bascule vers le sous-onglet Commandes (où réside le formulaire)
+  const btn = Array.from(document.querySelectorAll('#tab-base .sub-tabs .sub-tab')).find(b => b.textContent.trim() === 'Commandes');
+  if (btn) switchSubTab('commandes', btn);
+  showAddCommande();
+  if (clientId) document.getElementById('cmd-add-client').value = clientId;
 }
 
 // ─── Module Commandes (renderer : lit via CommandeService/ClientService, n'écrit jamais directement) ───
@@ -2037,23 +2165,91 @@ function backToCommandeDetail() {
   else backToCommandesListe();
 }
 
+let ANA_MODE = 'pie';      // 'pie' | 'evo'
+let ANA_METRIC = 'grammes';// 'grammes' | 'ca'
+let ANA_CLIENTS = null;    // null = tous, sinon tableau d'ids
+
 function showCamembert() {
   hideAllCommandeViews();
   document.getElementById('camembert-view').classList.remove('hidden');
-  renderCamembert();
+  // Filtre clients (cases à cocher)
+  const filtreCont = document.getElementById('ana-client-filtre');
+  filtreCont.innerHTML = ClientService.getAll().map(c =>
+    `<label class="check-row" style="padding:4px 0;"><span style="font-size:12px;">${c.nom}</span><input type="checkbox" class="ana-client-cb" value="${c.id}" checked onchange="onAnaClientFilter()"></label>`
+  ).join('');
+  ANA_CLIENTS = null;
+  renderAnalyse();
+}
+
+function onAnaClientFilter() {
+  const cbs = Array.from(document.querySelectorAll('.ana-client-cb'));
+  const checked = cbs.filter(c => c.checked).map(c => c.value);
+  ANA_CLIENTS = (checked.length === cbs.length) ? null : checked;
+  renderAnalyse();
+}
+
+function setAnaMode(mode, btn) {
+  ANA_MODE = mode;
+  btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ana-pie-wrap').style.display = mode === 'pie' ? 'block' : 'none';
+  document.getElementById('ana-evo-wrap').style.display = mode === 'evo' ? 'block' : 'none';
+  renderAnalyse();
+}
+
+function setAnaMetric(metric, btn) {
+  ANA_METRIC = metric;
+  btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAnalyse();
+}
+
+function renderAnalyse() {
+  if (ANA_MODE === 'pie') renderCamembert();
+  else renderEvolution();
+}
+
+function anaUnite(v) {
+  return ANA_METRIC === 'grammes' ? v.toFixed(1) + ' g' : Math.round(v).toLocaleString('fr-MA') + ' MAD';
 }
 
 // Palette contrastée (couleurs bien distinctes)
 const PIE_PALETTE = ['#C9A84C','#1a7a4a','#c0392b','#2980b9','#b5cc2e','#8e44ad','#e67e22','#16a085','#8B6914','#c0399b','#3a6ec9','#7d8f1d','#d35400','#2c3e50','#e84393'];
 
+function anaRepartition() {
+  const debut = document.getElementById('ana-debut').value || null;
+  const fin = document.getElementById('ana-fin').value || null;
+  let lignes;
+  if (ANA_METRIC === 'ca') {
+    lignes = CAService.repartitionParClient(debut, fin).map(l => ({ client: l.client, valeur: l.ca, pourcent: l.pourcent }));
+  } else {
+    // grammes : commandes livrées sur la période (cohérent avec l'évolution)
+    const all = ClientService.getAll().map(c => {
+      const cmds = BijoutierStore.query('commandes', x => x.client_id === c.id && x.statut === 'livree' &&
+        (!debut || x.date_livraison_effective >= debut) && (!fin || x.date_livraison_effective <= fin));
+      return { client: c, valeur: cmds.reduce((s, x) => s + (x.poids_or_g || 0), 0) };
+    }).filter(l => l.valeur > 0);
+    const total = all.reduce((s, l) => s + l.valeur, 0);
+    lignes = all.map(l => ({ ...l, pourcent: total > 0 ? (l.valeur / total) * 100 : 0 }))
+      .sort((a, b) => b.valeur - a.valeur);
+  }
+  if (ANA_CLIENTS) {
+    lignes = lignes.filter(l => ANA_CLIENTS.includes(l.client.id));
+    const total = lignes.reduce((s, l) => s + l.valeur, 0);
+    lignes = lignes.map(l => ({ ...l, pourcent: total > 0 ? (l.valeur / total) * 100 : 0 }));
+  }
+  return lignes;
+}
+
 function renderCamembert() {
-  let repartition = CommandeService.repartitionGrammesParClient();
+  let repartition = anaRepartition();
   const pie = document.getElementById('camembert-pie');
   const legende = document.getElementById('camembert-legende');
+  document.getElementById('ana-pie-title').textContent = ANA_METRIC === 'ca' ? 'Part de chaque client (CA)' : 'Part de chaque client (volume or)';
   if (!repartition.length) {
     pie.innerHTML = '';
     pie.style.background = 'var(--nm-bg)';
-    legende.innerHTML = '<p class="text-muted">Aucune commande</p>';
+    legende.innerHTML = '<p class="text-muted">Aucune commande livrée sur cette période</p>';
     return;
   }
 
@@ -2061,9 +2257,7 @@ function renderCamembert() {
   if (repartition.length > 15) {
     const top = repartition.slice(0, 14);
     const reste = repartition.slice(14);
-    const grammesAutres = reste.reduce((s, r) => s + r.grammes, 0);
-    const pourcentAutres = reste.reduce((s, r) => s + r.pourcent, 0);
-    top.push({ client: { nom: `Autres (${reste.length})` }, grammes: grammesAutres, pourcent: pourcentAutres });
+    top.push({ client: { nom: `Autres (${reste.length})` }, valeur: reste.reduce((s, r) => s + r.valeur, 0), pourcent: reste.reduce((s, r) => s + r.pourcent, 0) });
     repartition = top;
   }
 
@@ -2099,9 +2293,45 @@ function renderCamembert() {
   legende.innerHTML = repartition.map((r, i) => `
     <div class="depot-row">
       <div style="display:flex;align-items:center;gap:8px;"><span class="pie-legend-dot" style="background:${PIE_PALETTE[i % PIE_PALETTE.length]};"></span>${r.client.nom}</div>
-      <div><span class="depot-mad">${r.pourcent.toFixed(1)}%</span> <span class="text-muted">· ${r.grammes.toFixed(1)} g</span></div>
+      <div><span class="depot-mad">${r.pourcent.toFixed(1)}%</span> <span class="text-muted">· ${anaUnite(r.valeur)}</span></div>
     </div>
   `).join('');
+}
+
+function renderEvolution() {
+  const debut = document.getElementById('ana-debut').value || null;
+  const fin = document.getElementById('ana-fin').value || null;
+  const serie = CAService.evolution(debut, fin, ANA_METRIC, ANA_CLIENTS);
+  const legende = document.getElementById('camembert-legende');
+  const chart = document.getElementById('ana-evo-chart');
+  document.getElementById('ana-evo-title').textContent = ANA_METRIC === 'ca' ? 'Évolution du CA' : 'Évolution du volume (g)';
+
+  if (serie.length === 0) {
+    chart.innerHTML = '<p class="text-muted" style="padding:16px 0;text-align:center;">Aucune livraison sur cette période</p>';
+    legende.innerHTML = '';
+    return;
+  }
+
+  const W = 300, H = 130, PAD = 28;
+  const maxV = Math.max(...serie.map(s => s.valeur), 1);
+  const n = serie.length;
+  const x = i => PAD + (n === 1 ? (W - 2 * PAD) / 2 : (i * (W - 2 * PAD)) / (n - 1));
+  const y = v => H - PAD - (v / maxV) * (H - 2 * PAD);
+
+  const pts = serie.map((s, i) => `${x(i).toFixed(1)},${y(s.valeur).toFixed(1)}`);
+  const line = `<polyline fill="none" stroke="var(--gold)" stroke-width="2.5" points="${pts.join(' ')}"/>`;
+  const dots = serie.map((s, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(s.valeur).toFixed(1)}" r="3" fill="var(--olive)"/>`).join('');
+  const labels = serie.map((s, i) => {
+    const dd = s.date.slice(5); // MM-DD
+    return `<text x="${x(i).toFixed(1)}" y="${H - 8}" font-size="8" fill="var(--text-muted)" text-anchor="middle">${dd}</text>`;
+  }).join('');
+  const baseline = `<line x1="${PAD}" y1="${H - PAD}" x2="${W - PAD}" y2="${H - PAD}" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>`;
+
+  chart.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${baseline}${line}${dots}${labels}</svg>`;
+
+  const total = serie.reduce((s, p) => s + p.valeur, 0);
+  legende.innerHTML = `<div class="depot-row"><div>Total période</div><div class="depot-mad">${anaUnite(total)}</div></div>` +
+    serie.map(s => `<div class="depot-row"><div class="text-muted">${s.date}</div><div class="depot-amount">${anaUnite(s.valeur)}</div></div>`).join('');
 }
 
 function backToCommandesListe() {

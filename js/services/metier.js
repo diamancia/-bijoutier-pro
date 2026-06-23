@@ -623,6 +623,25 @@ const CAService = {
     return livrees.reduce((sum, c) => sum + (c.tarif_prestation || 0), 0);
   },
 
+  // Série temporelle (évolution) sur une période : valeur par date de livraison.
+  // metric = 'ca' (somme tarif_prestation) ou 'grammes' (somme poids_or_g).
+  // clientIds : tableau optionnel pour filtrer certains clients (sinon tous).
+  evolution(debut, fin, metric = 'ca', clientIds = null) {
+    const livrees = BijoutierStore.query('commandes', c =>
+      c.statut === 'livree' && c.date_livraison_effective &&
+      (!debut || c.date_livraison_effective >= debut) &&
+      (!fin || c.date_livraison_effective <= fin) &&
+      (!clientIds || clientIds.includes(c.client_id))
+    );
+    const parDate = {};
+    livrees.forEach(c => {
+      const d = c.date_livraison_effective;
+      if (!parDate[d]) parDate[d] = 0;
+      parDate[d] += metric === 'grammes' ? (c.poids_or_g || 0) : (c.tarif_prestation || 0);
+    });
+    return Object.keys(parDate).sort().map(d => ({ date: d, valeur: parDate[d] }));
+  },
+
   // Répartition du CA par client sur une période, triée + part en % du total
   repartitionParClient(debut, fin) {
     const lignes = ClientService.getAll()
