@@ -965,6 +965,7 @@ const ArtisanService = {
       nom: data.nom,
       competences: data.competences || [],
       telephone: data.telephone || '',
+      lieu: data.lieu || 'in_situ',
       actif: true,
     });
   },

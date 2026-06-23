@@ -208,6 +208,39 @@ body {
   border-radius: 14px;
 }
 .btn-ico { font-size: 20px; line-height: 1; }
+.btn-ico-xl { font-size: 30px; line-height: 1; }
+
+/* ── Vue Artisans : grande, contrastée, accessible (artisans très visuels) ──
+   glassmorphisme + grands icônes + couleurs vives + texte agrandi */
+.artisan-group-title { font-size: 14px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--metal); margin: 14px 2px 8px; display:flex; align-items:center; gap:6px; }
+.artisan-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px; margin-bottom: 12px; border-radius: 20px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: 6px 6px 16px rgba(0,0,0,0.16), -5px -5px 14px rgba(255,255,255,0.7);
+  cursor: pointer; transition: transform .12s;
+}
+.artisan-card:active { transform: scale(0.98); }
+.dark .artisan-card { background: rgba(44,40,32,0.5); border-color: rgba(255,255,255,0.09); box-shadow: 6px 6px 16px #0a0908, -5px -5px 14px #2e2b24; }
+.artisan-avatar {
+  width: 62px; height: 62px; border-radius: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 800;
+  background: linear-gradient(135deg, var(--gold), #8B6914); color: #1a1713;
+  box-shadow: 3px 3px 9px rgba(0,0,0,0.28);
+}
+.artisan-name { font-size: 19px; font-weight: 800; color: var(--text); line-height: 1.15; }
+.artisan-sub { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+.artisan-gap {
+  font-size: 17px; font-weight: 800; padding: 8px 13px; border-radius: 14px;
+  box-shadow: 2px 2px 7px rgba(0,0,0,0.22); white-space: nowrap; text-align:center; line-height:1.1;
+}
+.artisan-gap small { display:block; font-size:9px; font-weight:600; opacity:.85; letter-spacing:.5px; }
+.artisan-gap.has { background: #ff7a00; color: #fff; }   /* vif : or détenu en cours */
+.artisan-gap.zero { background: var(--olive); color: #1a1713; }
+.artisan-gap.pending { background: var(--danger); color:#fff; }
 
 /* Camembert (part client) en dégradé conique */
 .pie-chart {
@@ -736,14 +769,14 @@ body {
         <div class="card-title">Chef d'atelier</div>
         <div class="text-muted">Que veux-tu gérer ?</div>
       </div>
-      <button class="nm-btn nm-btn-gold" style="width:100%;padding:26px;font-size:18px;margin-top:14px;position:relative;" onclick="chefEnterArtisans()">
-        👷 ARTISANS
-        <span id="chef-home-badge" class="chip chip-red hidden" style="position:absolute;top:10px;right:10px;">0</span>
-        <div style="font-size:12px;font-weight:400;margin-top:6px;color:rgba(0,0,0,0.55);">Production par artisan · entrées / sorties</div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:30px;font-size:22px;font-weight:800;margin-top:14px;position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;" onclick="chefEnterArtisans()">
+        <span class="btn-ico-xl">👷</span>ARTISANS
+        <span id="chef-home-badge" class="chip chip-red hidden" style="position:absolute;top:12px;right:12px;font-size:14px;padding:4px 10px;">0</span>
+        <div style="font-size:13px;font-weight:500;margin-top:6px;color:rgba(0,0,0,0.6);">Production par artisan · entrées / sorties</div>
       </button>
-      <button class="nm-btn nm-btn-lg" style="width:100%;padding:26px;font-size:18px;margin-top:14px;border:2px solid var(--olive);" onclick="chefEnterAtelier()">
-        🏭 ATELIER
-        <div style="font-size:12px;font-weight:400;margin-top:6px;color:var(--text-muted);">Toute la plateforme (clients, coffre, cours…)</div>
+      <button class="nm-btn nm-btn-green" style="width:100%;padding:30px;font-size:22px;font-weight:800;margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:4px;" onclick="chefEnterAtelier()">
+        <span class="btn-ico-xl">🏭</span>ATELIER
+        <div style="font-size:13px;font-weight:500;margin-top:6px;color:rgba(0,0,0,0.6);">Toute la plateforme (clients, coffre, cours…)</div>
       </button>
       <button class="nm-btn" style="width:100%;padding:10px;margin-top:20px;" onclick="logout()">⏏ Déconnexion</button>
     </div>
@@ -1536,7 +1569,7 @@ body {
           <div class="nm-card" style="padding:10px 12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span class="section-title" style="margin-bottom:0;">Mes artisans</span>
-              <button class="nm-btn" style="font-size:11px;padding:6px 10px;" onclick="showAddArtisan()">+ Artisan</button>
+              <button class="nm-btn nm-btn-green nm-btn-lg" style="font-size:13px;padding:8px 14px;" onclick="showAddArtisan()"><span class="btn-ico">➕</span>Artisan</button>
             </div>
             <div class="text-muted" style="margin-top:4px;font-size:11px;">L'artisan reçoit de l'or à travailler, jamais d'argent.</div>
           </div>
@@ -1562,7 +1595,14 @@ body {
                 <input class="nm-input" id="art-add-pin" inputmode="numeric" maxlength="4" placeholder="0000">
               </div>
             </div>
-            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="submitAddArtisan()">Enregistrer</button>
+            <div class="form-group">
+              <label class="form-label">Lieu de travail</label>
+              <select class="nm-select" id="art-add-lieu">
+                <option value="in_situ">🏠 In-situ (atelier)</option>
+                <option value="ex_situ">🚚 Ex-situ (externe)</option>
+              </select>
+            </div>
+            <button class="nm-btn nm-btn-green" style="width:100%;padding:10px;" onclick="submitAddArtisan()">Enregistrer</button>
           </div>
         </div>
 
@@ -1714,12 +1754,33 @@ body {
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/store.js"></script>
 <script src="js/seed-data.js"></script>
 <script src="js/services/metier.js"></script>
 <script>
 BijoutierStore.init(SEED_DATA);
+
+// ─── Supabase : init + health-check non bloquant (l'app reste 100% fonctionnelle hors-ligne) ───
+let SUPABASE_ONLINE = false;
+if (typeof initSupabase === 'function') initSupabase();
+(function checkSupabaseConnexion() {
+  if (typeof supabaseHealthCheck !== 'function') return;
+  supabaseHealthCheck().then(res => {
+    SUPABASE_ONLINE = !!res.ok;
+    const dot = document.getElementById('offline-dot');
+    const label = document.getElementById('offline-label');
+    if (res.ok) {
+      console.log('[Supabase] Connecté ✓');
+      if (dot) { dot.style.background = '#1a7a4a'; }
+      if (label) { label.textContent = 'En ligne'; label.style.color = '#1a7a4a'; }
+    } else {
+      console.log('[Supabase] Mode local (hors-ligne) :', res.error);
+      if (label) { label.textContent = 'Local'; }
+    }
+  });
+})();
 
 // La valorisation "Mon Trésor" se recalcule automatiquement à chaque nouveau cours validé
 BijoutierStore.on('coursOr:added', () => { if (typeof renderTresor === 'function') renderTresor(); });
@@ -3214,26 +3275,34 @@ function backToArtisansListe() {
   renderArtisansListe();
 }
 
+function artisanCardHtml(a) {
+  const detenu = ArtisanService.getSoldeDetenu(a.id);
+  const nbPending = ArtisanService.getDemandes('en_attente', a.id).length;
+  // Le "gap" = or détenu (reçu − rendu). Vif s'il en détient, neutre si soldé.
+  let gapCls = detenu > 0.05 ? 'has' : 'zero';
+  let gapHtml = `${detenu.toFixed(1)}g<small>${detenu > 0.05 ? 'EN COURS' : 'SOLDÉ'}</small>`;
+  if (nbPending) { gapCls = 'pending'; gapHtml = `📬 ${nbPending}<small>À VALIDER</small>`; }
+  return `<div class="artisan-card" onclick="showArtisanDetail('${a.id}')">
+    <div class="artisan-avatar">${clientInitiales(a.nom)}</div>
+    <div style="flex:1;min-width:0;">
+      <div class="artisan-name">${a.nom}</div>
+      <div class="artisan-sub">${(a.competences || []).join(' · ') || '—'}</div>
+    </div>
+    <div class="artisan-gap ${gapCls}">${gapHtml}</div>
+  </div>`;
+}
+
 function renderArtisansListe() {
   const cont = document.getElementById('artisans-cards');
   if (!cont) return;
   const list = ArtisanService.getAll().filter(a => a.actif);
-  cont.innerHTML = list.length ? list.map(a => {
-    const detenu = ArtisanService.getSoldeDetenu(a.id);
-    const nbPending = ArtisanService.getDemandes('en_attente', a.id).length;
-    const chip = detenu > 0.001
-      ? `<span class="chip chip-gold">${detenu.toFixed(1)}g en cours</span>`
-      : '<span class="chip chip-green">à jour</span>';
-    const pendChip = nbPending ? `<span class="chip chip-red" style="margin-left:4px;">📬 ${nbPending}</span>` : '';
-    return `<div class="client-row" onclick="showArtisanDetail('${a.id}')">
-      <div class="client-avatar">${clientInitiales(a.nom)}</div>
-      <div class="client-info">
-        <div class="client-name">${a.nom}</div>
-        <div class="client-meta">${(a.competences || []).join(', ') || '—'}</div>
-      </div>
-      <div style="text-align:right;">${chip}${pendChip}</div>
-    </div>`;
-  }).join('') : '<p class="text-muted" style="text-align:center;padding:12px 0;">Aucun artisan</p>';
+  if (!list.length) { cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:12px 0;">Aucun artisan</p>'; return; }
+  const inSitu = list.filter(a => (a.lieu || 'in_situ') === 'in_situ');
+  const exSitu = list.filter(a => a.lieu === 'ex_situ');
+  let html = '';
+  if (inSitu.length) html += `<div class="artisan-group-title">🏠 In-situ · atelier</div>` + inSitu.map(artisanCardHtml).join('');
+  if (exSitu.length) html += `<div class="artisan-group-title">🚚 Ex-situ · externe</div>` + exSitu.map(artisanCardHtml).join('');
+  cont.innerHTML = html;
 }
 
 function showArtisanDetail(artisanId) {
@@ -3280,7 +3349,10 @@ function refuserSortieChef(demandeId) {
 }
 
 function renderArtisanMouvements(artisanId) {
-  document.getElementById('art-det-detenu').textContent = ArtisanService.getSoldeDetenu(artisanId).toFixed(1) + ' g';
+  const detenu = ArtisanService.getSoldeDetenu(artisanId);
+  const detEl = document.getElementById('art-det-detenu');
+  detEl.textContent = detenu.toFixed(1) + ' g';
+  detEl.style.color = detenu > 0.05 ? '#ff7a00' : 'var(--olive)';
   const ledger = ArtisanService.getLedger(artisanId);
   const donne = ledger.filter(m => m.type === 'sortie_coffre_artisan').reduce((s, m) => s + m.poids_g, 0);
   const rendu = ledger.filter(m => m.type === 'entree_coffre_retour_artisan').reduce((s, m) => s + m.poids_g, 0);
@@ -3331,8 +3403,9 @@ function submitAddArtisan() {
   const nom = document.getElementById('art-add-nom').value.trim();
   const comp = document.getElementById('art-add-comp').value.trim();
   const pin = document.getElementById('art-add-pin').value.trim();
+  const lieu = document.getElementById('art-add-lieu').value;
   if (!nom) { alert('Le nom est obligatoire'); return; }
-  const a = ArtisanService.ajouter({ nom, competences: comp ? [comp] : [] });
+  const a = ArtisanService.ajouter({ nom, competences: comp ? [comp] : [], lieu });
   if (pin) BijoutierStore.update('artisans', a.id, { pin });
   document.getElementById('add-artisan-form').classList.add('hidden');
   renderArtisansListe();

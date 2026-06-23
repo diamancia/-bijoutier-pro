@@ -40,3 +40,36 @@ function initSupabase() {
 function getSupabase() {
   return _supabaseClient;
 }
+
+// Vérifie la connexion réelle (lecture légère sur une table existante).
+// Renvoie une promesse { ok, error } — tout est capturé, jamais d'exception non gérée.
+async function supabaseHealthCheck() {
+  const client = _supabaseClient || initSupabase();
+  if (!client) return { ok: false, error: 'SDK/Config absent' };
+  try {
+    const { error } = await client.from('clients').select('id', { count: 'exact', head: true });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// Abonnement temps réel aux sorties d'or déclarées par les artisans (table demandes_sortie).
+// No-op silencieux si le client/la table n'existent pas encore. Retourne le channel (ou null).
+function subscribeDemandesSortie(onChange) {
+  const client = _supabaseClient || initSupabase();
+  if (!client) return null;
+  try {
+    const channel = client
+      .channel('demandes_sortie_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'demandes_sortie' }, payload => {
+        try { onChange && onChange(payload); } catch (e) { console.warn('[Supabase] handler:', e); }
+      })
+      .subscribe();
+    return channel;
+  } catch (e) {
+    console.warn('[Supabase] subscribe demandes_sortie impossible:', e.message);
+    return null;
+  }
+}

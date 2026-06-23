@@ -23,11 +23,11 @@ const SEED_DATA = {
   ],
 
   artisans: [
-    { id: 'arn_001', nom: 'Karim Ezzahiri', competences: ['préparation', 'pré-polissage'], telephone: '0662 111 222', pin: '1111', actif: true, created_at: '2026-01-05T00:00:00Z' },
-    { id: 'arn_002', nom: 'Samira Bensouda', competences: ['sertissage'], telephone: '0663 333 444', pin: '2222', actif: true, created_at: '2026-01-05T00:00:00Z' },
-    { id: 'arn_003', nom: 'Omar Idrissi', competences: ['gravure', 'sertissage'], telephone: '0664 555 666', pin: '3333', actif: true, created_at: '2026-02-01T00:00:00Z' },
-    { id: 'arn_004', nom: 'Mehdi Ouali (test)', competences: ['préparation', 'sertissage'], telephone: '0665 777 888', pin: '4444', actif: true, created_at: '2026-06-23T00:00:00Z' },
-    { id: 'arn_005', nom: 'Salma Idrissi (test)', competences: ['gravure'], telephone: '0666 999 000', pin: '5555', actif: true, created_at: '2026-06-23T00:00:00Z' },
+    { id: 'arn_001', nom: 'Karim Ezzahiri', competences: ['préparation', 'pré-polissage'], telephone: '0662 111 222', pin: '1111', lieu: 'in_situ', actif: true, created_at: '2026-01-05T00:00:00Z' },
+    { id: 'arn_002', nom: 'Samira Bensouda', competences: ['sertissage'], telephone: '0663 333 444', pin: '2222', lieu: 'in_situ', actif: true, created_at: '2026-01-05T00:00:00Z' },
+    { id: 'arn_003', nom: 'Omar Idrissi', competences: ['gravure', 'sertissage'], telephone: '0664 555 666', pin: '3333', lieu: 'ex_situ', actif: true, created_at: '2026-02-01T00:00:00Z' },
+    { id: 'arn_004', nom: 'Mehdi Ouali (test)', competences: ['préparation', 'sertissage'], telephone: '0665 777 888', pin: '4444', lieu: 'in_situ', actif: true, created_at: '2026-06-23T00:00:00Z' },
+    { id: 'arn_005', nom: 'Salma Idrissi (test)', competences: ['gravure'], telephone: '0666 999 000', pin: '5555', lieu: 'ex_situ', actif: true, created_at: '2026-06-23T00:00:00Z' },
   ],
 
   clients: [
