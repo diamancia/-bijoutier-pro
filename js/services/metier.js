@@ -187,6 +187,7 @@ const CommandeService = {
       honoraires_mad: honoraires,
       or_prete_g: 0,
       piece_id: null,
+      est_reparation: !!data.est_reparation,
       cours_depot: CoursService.getCours(),
       notes: data.notes || '',
     });
@@ -518,6 +519,26 @@ const CaisseService = {
     return snaps.reduce((sum, s) => {
       return sum + (s.sens === 'entree' ? s.montant_mad : -s.montant_mad);
     }, 0);
+  },
+
+  // Solde d'or physiquement en caisse = or reçu (dépôts clients + achats tiers)
+  // − or livré aux clients. Toute achat d'or (achats divers, achat coffre) l'augmente automatiquement.
+  getSoldeOr() {
+    const depots = BijoutierStore.query('stock_client', m => m.type === 'depot_client')
+      .reduce((s, m) => s + (m.poids_g || 0), 0);
+    const livraisons = BijoutierStore.query('stock_client', m => m.type === 'sortie_client')
+      .reduce((s, m) => s + (m.poids_g || 0), 0);
+    const achatsDivers = BijoutierStore.getAll('achatsDivers')
+      .reduce((s, a) => s + (a.poids_g || 0), 0);
+    const achatsCoffre = BijoutierStore.query('stock_atelier', m => m.type === 'entree_coffre_achat')
+      .reduce((s, m) => s + (m.poids_g || 0), 0);
+    return {
+      depots_g: depots,
+      livraisons_g: livraisons,
+      achats_tiers_g: achatsDivers + achatsCoffre,
+      solde_g: depots + achatsDivers + achatsCoffre - livraisons,
+      non_livre_g: depots - livraisons,
+    };
   },
 };
 

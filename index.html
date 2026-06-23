@@ -201,6 +201,14 @@ body {
 }
 .nm-btn-green:active { box-shadow: inset 2px 2px 6px var(--olive-dark), inset -2px -2px 6px var(--olive-light); }
 
+/* Gros boutons avec icône */
+.nm-btn-lg {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 16px; font-size: 15px; font-weight: 600;
+  border-radius: 14px;
+}
+.btn-ico { font-size: 20px; line-height: 1; }
+
 /* Camembert (part client) en dégradé conique */
 .pie-chart {
   width: 150px; height: 150px; border-radius: 50%;
@@ -826,10 +834,11 @@ body {
       <div id="sub-commandes" class="hidden">
         <div id="commande-list-view">
           <div id="commandes-list"></div>
-          <div style="margin-top:10px;display:flex;gap:8px;">
-            <button class="nm-btn nm-btn-gold" style="flex:1;padding:10px;" onclick="showAddCommande()">+ Commande</button>
-            <button class="nm-btn nm-btn-green" style="flex:1;padding:10px;" onclick="showCamembert()">📊 Part clients</button>
+          <div style="margin-top:12px;display:flex;gap:10px;">
+            <button class="nm-btn nm-btn-gold nm-btn-lg" style="flex:1;" onclick="showAddCommande()"><span class="btn-ico">💍</span>Commande</button>
+            <button class="nm-btn nm-btn-green nm-btn-lg" style="flex:1;" onclick="showCamembert()"><span class="btn-ico">📊</span>Part clients</button>
           </div>
+          <button class="nm-btn nm-btn-lg" style="width:100%;margin-top:10px;border:2px solid var(--olive);" onclick="showAddReparation()"><span class="btn-ico">🔧</span>Réparations</button>
         </div>
 
         <div id="commande-detail-view" class="hidden">
@@ -867,13 +876,9 @@ body {
 
             <!-- Cases à cocher -->
             <div class="nm-inset" style="margin-top:8px;">
-              <div class="check-row">
+              <div class="check-row" style="padding-bottom:0;">
                 <span style="font-size:13px;color:var(--text);">Réglé</span>
                 <input type="checkbox" class="check-box" id="cmd-det-regle" onchange="toggleRegle()">
-              </div>
-              <div class="check-row" style="padding-bottom:0;">
-                <span style="font-size:13px;color:var(--text);">Poinçon douane</span>
-                <input type="checkbox" class="check-box" id="cmd-det-poincon" onchange="togglePoincon()">
               </div>
             </div>
 
@@ -926,8 +931,15 @@ body {
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Type</label>
-                <input class="nm-input" id="cmd-add-type" placeholder="Bague, Collier...">
+                <label class="form-label">Type de bijou</label>
+                <input class="nm-input" id="cmd-add-type" list="bijou-categories" placeholder="Choisir ou saisir">
+                <datalist id="bijou-categories">
+                  <option value="Bagues"></option>
+                  <option value="Colliers"></option>
+                  <option value="Bracelets"></option>
+                  <option value="Boucles"></option>
+                  <option value="Gourmettes"></option>
+                </datalist>
               </div>
               <div class="form-group">
                 <label class="form-label">Poids or (g)</label>
@@ -965,6 +977,43 @@ body {
               </div>
             </div>
             <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;" onclick="submitAddCommande()">Créer la commande</button>
+          </div>
+        </div>
+
+        <!-- Réparations (isolé) -->
+        <div id="add-reparation-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+          <div class="nm-card">
+            <p class="section-title">🔧 Nouvelle réparation</p>
+            <div class="form-group">
+              <label class="form-label">Client</label>
+              <select class="nm-select" id="rep-add-client"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Catégorie du bijou</label>
+              <input class="nm-input" id="rep-add-type" list="bijou-categories" placeholder="Bagues, Colliers...">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Poids or (g)</label>
+                <input class="nm-input" id="rep-add-poids" type="number" placeholder="2.0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Honoraires (MAD)</label>
+                <input class="nm-input" id="rep-add-honoraires" type="number" placeholder="80">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Date dépôt</label>
+                <input class="nm-input" type="date" id="rep-add-depot">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Livraison prévue</label>
+                <input class="nm-input" type="date" id="rep-add-livraison">
+              </div>
+            </div>
+            <button class="nm-btn nm-btn-green" style="width:100%;padding:10px;margin-top:4px;" onclick="submitAddReparation()">Enregistrer la réparation</button>
           </div>
         </div>
       </div>
@@ -1303,6 +1352,19 @@ body {
 
       <!-- Caisse -->
       <div id="met-caisse" class="hidden">
+        <!-- Solde d'or en caisse -->
+        <div class="nm-card">
+          <div class="caisse-big" style="padding:10px 0;">
+            <div class="caisse-cours-label">🏦 Or en caisse</div>
+            <div class="caisse-cours-val" id="caisse-solde-or">— g</div>
+            <div class="caisse-cours-unit">non livré + achats tiers − livraisons</div>
+          </div>
+          <div class="stat-row" style="margin-top:4px;">
+            <div class="stat-box"><div class="stat-val" id="caisse-non-livre">—</div><div class="stat-lbl">📥 Dépôts non livrés (g)</div></div>
+            <div class="stat-box"><div class="stat-val" id="caisse-achats-tiers">—</div><div class="stat-lbl">🪙 Achats tiers (g)</div></div>
+          </div>
+        </div>
+
         <div class="nm-card">
           <div class="caisse-big">
             <div class="caisse-cours-label">Cours actif</div>
@@ -1541,6 +1603,16 @@ function switchMetierTab(tab, btn) {
   if (tab === 'atelier') backToAtelierListe();
   if (tab === 'tresor') renderTresor();
   if (tab === 'cours') initCoursModule();
+  if (tab === 'caisse') renderCaisse();
+}
+
+function renderCaisse() {
+  const s = CaisseService.getSoldeOr();
+  document.getElementById('caisse-solde-or').textContent = s.solde_g.toFixed(1) + ' g';
+  document.getElementById('caisse-non-livre').textContent = s.non_livre_g.toFixed(1) + 'g';
+  document.getElementById('caisse-achats-tiers').textContent = s.achats_tiers_g.toFixed(1) + 'g';
+  const disp = document.getElementById('caisse-cours-display');
+  if (disp) disp.textContent = Math.round(CoursService.getCours());
 }
 
 function switchFilter(btn) {
@@ -1883,7 +1955,7 @@ function renderCommandesListe() {
 }
 
 function hideAllCommandeViews() {
-  ['commande-list-view','commande-detail-view','add-commande-view','recap-client-view','camembert-view']
+  ['commande-list-view','commande-detail-view','add-commande-view','add-reparation-view','recap-client-view','camembert-view']
     .forEach(id => document.getElementById(id).classList.add('hidden'));
 }
 
@@ -1915,7 +1987,6 @@ function showCommandeDetail(id) {
 
   // Cases à cocher
   document.getElementById('cmd-det-regle').checked = !!cmd.regle;
-  document.getElementById('cmd-det-poincon').checked = !!cmd.poincon_douane;
 
   // Récap livraison (entrée / livraison / gain) — visible une fois livrée
   const recap = document.getElementById('cmd-det-recap');
@@ -1972,26 +2043,62 @@ function showCamembert() {
   renderCamembert();
 }
 
+// Palette contrastée (couleurs bien distinctes)
+const PIE_PALETTE = ['#C9A84C','#1a7a4a','#c0392b','#2980b9','#b5cc2e','#8e44ad','#e67e22','#16a085','#8B6914','#c0399b','#3a6ec9','#7d8f1d','#d35400','#2c3e50','#e84393'];
+
 function renderCamembert() {
-  const repartition = CommandeService.repartitionGrammesParClient();
+  let repartition = CommandeService.repartitionGrammesParClient();
   const pie = document.getElementById('camembert-pie');
   const legende = document.getElementById('camembert-legende');
   if (!repartition.length) {
+    pie.innerHTML = '';
     pie.style.background = 'var(--nm-bg)';
     legende.innerHTML = '<p class="text-muted">Aucune commande</p>';
     return;
   }
-  const palette = ['#C9A84C', '#b5cc2e', '#8B6914', '#7d8f1d', '#E8C96A', '#d6e87a', '#3a2a6e', '#1a7a4a'];
-  let acc = 0;
-  const segments = repartition.map((r, i) => {
-    const start = acc;
-    acc += r.pourcent;
-    return `${palette[i % palette.length]} ${start.toFixed(2)}% ${acc.toFixed(2)}%`;
+
+  // Au-delà de 15 clients : on garde les 14 plus importants + un segment "Autres"
+  if (repartition.length > 15) {
+    const top = repartition.slice(0, 14);
+    const reste = repartition.slice(14);
+    const grammesAutres = reste.reduce((s, r) => s + r.grammes, 0);
+    const pourcentAutres = reste.reduce((s, r) => s + r.pourcent, 0);
+    top.push({ client: { nom: `Autres (${reste.length})` }, grammes: grammesAutres, pourcent: pourcentAutres });
+    repartition = top;
+  }
+
+  // Camembert SVG avec le % écrit sur chaque part
+  const R = 75, CX = 80, CY = 80;
+  let angle = -90; // départ en haut
+  const paths = [];
+  const labels = [];
+  repartition.forEach((r, i) => {
+    const a0 = angle;
+    const a1 = angle + (r.pourcent / 100) * 360;
+    angle = a1;
+    const rad = d => (d * Math.PI) / 180;
+    const x0 = CX + R * Math.cos(rad(a0)), y0 = CY + R * Math.sin(rad(a0));
+    const x1 = CX + R * Math.cos(rad(a1)), y1 = CY + R * Math.sin(rad(a1));
+    const large = (r.pourcent > 50) ? 1 : 0;
+    const color = PIE_PALETTE[i % PIE_PALETTE.length];
+    if (r.pourcent >= 99.9) {
+      paths.push(`<circle cx="${CX}" cy="${CY}" r="${R}" fill="${color}"/>`);
+    } else {
+      paths.push(`<path d="M${CX},${CY} L${x0.toFixed(2)},${y0.toFixed(2)} A${R},${R} 0 ${large} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${color}"/>`);
+    }
+    if (r.pourcent >= 6) {
+      const am = rad((a0 + a1) / 2);
+      const lx = CX + (R * 0.62) * Math.cos(am), ly = CY + (R * 0.62) * Math.sin(am);
+      labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="11" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="middle">${Math.round(r.pourcent)}%</text>`);
+    }
   });
-  pie.style.background = `conic-gradient(${segments.join(', ')})`;
+  pie.style.background = 'transparent';
+  pie.style.boxShadow = 'none';
+  pie.innerHTML = `<svg viewBox="0 0 160 160" width="150" height="150">${paths.join('')}${labels.join('')}</svg>`;
+
   legende.innerHTML = repartition.map((r, i) => `
     <div class="depot-row">
-      <div style="display:flex;align-items:center;gap:8px;"><span class="pie-legend-dot" style="background:${palette[i % palette.length]};"></span>${r.client.nom}</div>
+      <div style="display:flex;align-items:center;gap:8px;"><span class="pie-legend-dot" style="background:${PIE_PALETTE[i % PIE_PALETTE.length]};"></span>${r.client.nom}</div>
       <div><span class="depot-mad">${r.pourcent.toFixed(1)}%</span> <span class="text-muted">· ${r.grammes.toFixed(1)} g</span></div>
     </div>
   `).join('');
@@ -2039,6 +2146,32 @@ function livrerCommandeActuelle() {
   const poidsLivre = parseFloat(document.getElementById('cmd-det-poids-livre').value);
   CommandeService.livrer(_commandeDetailId, isNaN(poidsLivre) ? null : poidsLivre);
   showCommandeDetail(_commandeDetailId);
+}
+
+// ─── Réparations (isolé) ───
+function showAddReparation() {
+  hideAllCommandeViews();
+  document.getElementById('add-reparation-view').classList.remove('hidden');
+  document.getElementById('rep-add-client').innerHTML = ClientService.getAll()
+    .map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
+  document.getElementById('rep-add-depot').value = new Date().toISOString().split('T')[0];
+}
+
+function submitAddReparation() {
+  const clientId = document.getElementById('rep-add-client').value;
+  const type = document.getElementById('rep-add-type').value.trim();
+  const poids = parseFloat(document.getElementById('rep-add-poids').value) || 0;
+  const honoraires = parseFloat(document.getElementById('rep-add-honoraires').value) || 0;
+  const depot = document.getElementById('rep-add-depot').value;
+  const livraison = document.getElementById('rep-add-livraison').value;
+  if (!clientId || !type || !depot || !livraison) { alert('Merci de remplir client, catégorie et dates'); return; }
+
+  CommandeService.creer({
+    client_id: clientId, type: 'Réparation ' + type, poids_or_g: poids,
+    honoraires_mad: honoraires, est_reparation: true,
+    date_depot_or: depot, date_livraison_prevue: livraison,
+  });
+  backToCommandesListe();
 }
 
 // ─── Module Atelier (pipeline Coffre → Fonderie → Chef d'atelier → Artisans → Douane → Finition → Sortie) ───
