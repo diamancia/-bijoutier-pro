@@ -1157,8 +1157,8 @@ body {
       <!-- Balayures -->
       <div id="met-balayures">
         <div class="filter-tabs">
-          <button class="filter-tab active" onclick="switchFilter(this)">Incinération</button>
-          <button class="filter-tab" onclick="switchFilter(this)">Fonte</button>
+          <button class="filter-tab active" id="bal-tab-incin" onclick="selectBalayureType('Incinération', this)">Incinération</button>
+          <button class="filter-tab" id="bal-tab-fonte" onclick="selectBalayureType('Fonte', this)">Fonte</button>
         </div>
         <div class="nm-card">
           <p class="section-title">Saisie traitement</p>
@@ -1205,7 +1205,11 @@ body {
               <div class="bar-lbl">24K pur</div>
             </div>
           </div>
-          <button class="nm-btn nm-btn-gold" style="width:100%;padding:9px;font-size:12px;" onclick="saveBalayures()">Enregistrer</button>
+          <button class="nm-btn nm-btn-gold nm-btn-lg" style="width:100%;" onclick="saveBalayures()"><span class="btn-ico">♻️</span>Enregistrer</button>
+        </div>
+        <div class="nm-card">
+          <p class="section-title"><span id="bal-list-titre">Balayures Incinération</span> <span id="bal-list-total" style="float:right;color:var(--gold);"></span></p>
+          <div id="balayures-list"></div>
         </div>
       </div>
 
@@ -1635,6 +1639,10 @@ function switchTab(tab) {
   const pill = document.createElement('div');
   pill.className = 'nav-pill';
   navEl.appendChild(pill);
+  if (tab === 'metier') {
+    const activeSub = document.querySelector('#tab-metier .sub-tabs .sub-tab.active');
+    if (activeSub && /Balayures/.test(activeSub.textContent)) renderBalayures();
+  }
 }
 
 function switchSubTab(tab, btn) {
@@ -1659,6 +1667,7 @@ function switchMetierTab(tab, btn) {
   if (tab === 'tresor') renderTresor();
   if (tab === 'cours') initCoursModule();
   if (tab === 'caisse') renderCaisse();
+  if (tab === 'balayures') renderBalayures();
 }
 
 function renderCaisse() {
@@ -1690,10 +1699,50 @@ function calcBalayures() {
   document.getElementById('bar-pur-bar').style.height = Math.max(2, (pur / max) * maxH) + 'px';
 }
 
+let BAL_TYPE = 'Incinération';
+
+function selectBalayureType(type, btn) {
+  BAL_TYPE = type;
+  btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('bal-list-titre').textContent = 'Balayures ' + type;
+  renderBalayures();
+}
+
 function saveBalayures() {
+  const initial = parseFloat(document.getElementById('bal-initial').value) || 0;
+  const traite = parseFloat(document.getElementById('bal-traite').value) || 0;
   const pur = parseFloat(document.getElementById('bal-pur').value) || 0;
-  if (pur > 0) alert('✅ Balayure enregistrée: ' + pur + 'g 24K → ' + (pur * COURS_ACTIF).toLocaleString('fr-MA') + ' MAD');
-  else alert('Veuillez saisir les données');
+  if (pur <= 0) { alert('Veuillez saisir l\'or pur 24K récupéré'); return; }
+
+  BalayureService.enregistrer({
+    type: BAL_TYPE,
+    poids_initial_g: initial,
+    poids_traite_g: traite,
+    poids_pur_24k_g: pur,
+  });
+
+  document.getElementById('bal-initial').value = '';
+  document.getElementById('bal-traite').value = '';
+  document.getElementById('bal-pur').value = '';
+  calcBalayures();
+  renderBalayures();
+  alert('✅ Balayure ' + BAL_TYPE + ' enregistrée : ' + pur + 'g 24K → ' + (pur * CoursService.getCours()).toLocaleString('fr-MA') + ' MAD (ajouté au stock propre)');
+}
+
+function renderBalayures() {
+  const list = BalayureService.getHistorique().filter(b => b.type === BAL_TYPE);
+  const cont = document.getElementById('balayures-list');
+  if (!cont) return;
+  const total = list.reduce((s, b) => s + (b.poids_pur_24k_g || 0), 0);
+  document.getElementById('bal-list-total').textContent = total > 0 ? total.toFixed(1) + 'g 24K' : '';
+  cont.innerHTML = list.length ? list.map(b => {
+    const rdt = b.poids_initial_g > 0 ? ((b.poids_pur_24k_g / b.poids_initial_g) * 100).toFixed(1) : '—';
+    return `<div class="cours-entry">
+      <div><div class="cours-date">${b.date}</div><div class="cours-qty">${b.poids_initial_g || 0}g → ${b.poids_pur_24k_g}g · rdt ${rdt}%</div></div>
+      <div class="cours-val">${(b.valeur_mad || 0).toLocaleString('fr-MA')} MAD</div>
+    </div>`;
+  }).join('') : '<p class="text-muted">Aucune balayure ' + BAL_TYPE + '</p>';
 }
 
 function calcRaffinage() {
