@@ -484,6 +484,33 @@ body {
 .var-up { color: var(--success); }
 .var-down { color: var(--danger); }
 
+/* ── Univers MÉTAL (matière première : balayures, fonte, sbika/lingot, chdaya, raffinage) ──
+   couleur distincte (acier/teal) pour signaler la séparation avec l'univers client quotidien */
+:root { --metal: #2f8f9d; --metal-soft: rgba(47,143,157,0.14); }
+.metal-accent { color: var(--metal) !important; }
+.metal-row { border-left: 3px solid var(--metal); background: var(--metal-soft); padding-left: 8px; border-radius: 6px; }
+.metal-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background: var(--metal); margin-right:5px; vertical-align: middle; }
+.chip-metal { background: var(--metal-soft); color: var(--metal); }
+
+/* ── Coffre dynamique : icône remplie selon le niveau d'or ── */
+.coffre-visual { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0 2px; }
+.coffre-box {
+  position: relative; width: 130px; height: 110px; border-radius: 14px;
+  background: linear-gradient(145deg, #3a352b, #211e18);
+  border: 3px solid #c9a84c; overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.3);
+}
+.coffre-fill {
+  position: absolute; left: 0; bottom: 0; width: 100%;
+  background: linear-gradient(180deg, #e8c75a, #b8881f);
+  transition: height 0.6s ease; height: 0;
+}
+.coffre-door { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.coffre-dial { font-size: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+.coffre-amount { font-size: 20px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.coffre-cap { font-size: 10px; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+.coffre-valo { font-size: 15px; font-weight: 600; color: var(--gold); }
+
 .client-detail-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
 .client-detail-avatar {
   width: 52px; height: 52px; border-radius: 50%;
@@ -774,6 +801,9 @@ body {
                 <div class="stat-lbl">Total MAD</div>
               </div>
             </div>
+            <button class="nm-btn nm-btn-lg" id="det-credit-btn" style="width:100%;margin-top:8px;border:2px solid var(--olive);" onclick="showClientCredit()">
+              <span class="btn-ico">💳</span><span id="det-credit-label">Crédit : —</span>
+            </button>
           </div>
           <!-- Sous-onglets de la fiche client -->
           <div class="sub-tabs">
@@ -1089,12 +1119,12 @@ body {
     <!-- TAB METIER -->
     <div class="tab-content" id="tab-metier">
       <div class="sub-tabs">
-        <button class="sub-tab active" onclick="switchMetierTab('balayures', this)">Balayures</button>
-        <button class="sub-tab" onclick="switchMetierTab('raffinage', this)">Raffinage</button>
+        <button class="sub-tab active" onclick="switchMetierTab('balayures', this)"><span class="metal-dot"></span>Balayures</button>
+        <button class="sub-tab" onclick="switchMetierTab('raffinage', this)"><span class="metal-dot"></span>Raffinage</button>
         <button class="sub-tab" onclick="switchMetierTab('cours', this)">Cours or</button>
         <button class="sub-tab" onclick="switchMetierTab('caisse', this)">Caisse</button>
         <button class="sub-tab" onclick="switchMetierTab('atelier', this)">Atelier</button>
-        <button class="sub-tab" onclick="switchMetierTab('tresor', this)">Mon Trésor</button>
+        <button class="sub-tab" onclick="switchMetierTab('tresor', this)">🔐 Coffre</button>
       </div>
 
       <!-- Balayures -->
@@ -1457,31 +1487,74 @@ body {
 
       <!-- Mon Trésor (stock propre + stock client) -->
       <div id="met-tresor" class="hidden">
+        <!-- Coffre dynamique : réserve d'or du bijoutier, alimentée par injections -->
         <div class="nm-card">
-          <p class="section-title">Résumé global</p>
-          <div class="stat-row">
-            <div class="stat-box"><div class="stat-val" id="tresor-total-propre-g">—</div><div class="stat-lbl">Stock propre (g)</div></div>
-            <div class="stat-box"><div class="stat-val" id="tresor-total-propre-mad">—</div><div class="stat-lbl">Valorisation (MAD)</div></div>
+          <div class="coffre-visual">
+            <div class="coffre-box">
+              <div class="coffre-fill" id="coffre-fill"></div>
+              <div class="coffre-door">
+                <div class="coffre-dial" id="coffre-dial">🔒</div>
+                <div class="coffre-amount" id="coffre-amount">— g</div>
+                <div class="coffre-cap" id="coffre-cap"></div>
+              </div>
+            </div>
+            <div class="coffre-valo" id="coffre-valo">— MAD</div>
           </div>
-          <div class="stat-row">
-            <div class="stat-box"><div class="stat-val" id="tresor-total-client-g">—</div><div class="stat-lbl">Stock client (g)</div></div>
-            <div class="stat-box"><div class="stat-val" id="tresor-total-global-g">—</div><div class="stat-lbl">Total global (g)</div></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="nm-btn nm-btn-gold nm-btn-lg" style="flex:1;" onclick="showCoffreAction('injecter')"><span class="btn-ico">➕</span>Injecter</button>
+            <button class="nm-btn nm-btn-lg metal-accent" style="flex:1;border:2px solid var(--metal);" onclick="showCoffreAction('lingot')"><span class="btn-ico">🪙</span>Lingot</button>
+            <button class="nm-btn nm-btn-lg" style="flex:1;border:2px solid var(--olive);" onclick="showCoffreAction('preter')"><span class="btn-ico">🤝</span>Prêter</button>
+          </div>
+
+          <!-- Formulaire d'action contextuel -->
+          <div id="coffre-action-form" class="nm-inset hidden" style="margin-top:8px;">
+            <p class="section-title" id="coffre-action-titre" style="margin-bottom:6px;">—</p>
+            <div id="coffre-action-client-wrap" class="form-group hidden">
+              <label class="form-label">Client</label>
+              <select class="nm-select" id="coffre-action-client"></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Poids (g)</label>
+                <input class="nm-input" id="coffre-action-poids" type="number" placeholder="10">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pureté</label>
+                <select class="nm-select" id="coffre-action-purete">
+                  <option value="24K">24K</option><option value="22K">22K</option>
+                  <option value="18K" selected>18K</option><option value="14K">14K</option><option value="9K">9K</option>
+                </select>
+              </div>
+            </div>
+            <div id="coffre-action-montant-wrap" class="form-group hidden">
+              <label class="form-label">Montant payé (MAD) — caisse</label>
+              <input class="nm-input" id="coffre-action-montant" type="number" placeholder="auto = cours × poids">
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" id="coffre-action-submit" onclick="submitCoffreAction()">Valider</button>
           </div>
         </div>
 
+        <!-- Crédits clients : qui me doit de l'or/argent -->
         <div class="nm-card">
-          <p class="section-title">Stock propre — par pureté</p>
-          <div id="tresor-propre-detail"></div>
+          <p class="section-title">💳 Crédits clients <span id="coffre-credits-total" style="float:right;color:var(--danger);"></span></p>
+          <div id="coffre-credits-list"></div>
         </div>
 
+        <!-- Or par pureté dans le coffre -->
         <div class="nm-card">
-          <p class="section-title">Stock client</p>
-          <div id="tresor-client-detail"></div>
+          <p class="section-title">Or du coffre — par pureté</p>
+          <div id="coffre-propre-detail"></div>
+        </div>
+
+        <!-- Or client consigné (gardé pour autrui, pas à moi) -->
+        <div class="nm-card">
+          <p class="section-title">Or client consigné <span id="coffre-client-total" style="float:right;color:var(--text-muted);"></span></p>
+          <div id="coffre-client-detail"></div>
         </div>
 
         <div class="nm-card">
           <p class="section-title">Historique des mouvements</p>
-          <div id="tresor-historique"></div>
+          <div id="coffre-historique"></div>
         </div>
       </div>
     </div>
@@ -1996,13 +2069,15 @@ function renderClientsListe(filtre) {
   const list = filtre ? ClientService.rechercher(filtre) : ClientService.getAll();
   cont.innerHTML = list.length ? list.map(c => {
     const nbCommandes = ClientService.getCommandes(c.id).length;
+    const dette = CreditService.getSoldeClient(c.id);
+    const detteChip = dette > 0.01 ? `<span class="chip chip-red" style="margin-left:4px;">doit ${dette.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</span>` : '';
     return `<div class="client-row" onclick="showClientDetail('${c.id}')">
       <div class="client-avatar">${clientInitiales(c.nom)}</div>
       <div class="client-info">
         <div class="client-name">${c.nom}</div>
         <div class="client-meta">${c.telephone || ''} · ${c.bijouterie || ''}</div>
       </div>
-      <div class="client-badge">${nbCommandes} commande${nbCommandes !== 1 ? 's' : ''}</div>
+      <div style="text-align:right;"><div class="client-badge">${nbCommandes} cmd${nbCommandes !== 1 ? 's' : ''}</div>${detteChip}</div>
     </div>`;
   }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun client</p>';
 }
@@ -2021,6 +2096,20 @@ function showClientDetail(clientId) {
   document.getElementById('det-name').textContent = client.nom;
   document.getElementById('det-phone').textContent = client.telephone || '—';
   document.getElementById('det-shop').textContent = client.bijouterie || '—';
+
+  // Bouton crédit : montant dû par le client (lié au coffre / or prêté + honoraires)
+  const dette = CreditService.getSoldeClient(clientId);
+  const cBtn = document.getElementById('det-credit-btn');
+  const cLbl = document.getElementById('det-credit-label');
+  if (dette > 0.01) {
+    cLbl.textContent = 'Crédit : doit ' + dette.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
+    cBtn.style.borderColor = 'var(--danger)';
+    cBtn.style.color = 'var(--danger)';
+  } else {
+    cLbl.textContent = 'Crédit : à jour ✓';
+    cBtn.style.borderColor = 'var(--success)';
+    cBtn.style.color = 'var(--success)';
+  }
 
   // Onglet Commandes par défaut + rendu des 3 rubriques du client
   document.querySelectorAll('#client-detail-view .sub-tab').forEach(b => b.classList.remove('active'));
@@ -2157,6 +2246,23 @@ function saveOujraDefaut() {
   if (!_clientDetailId) return;
   const v = parseFloat(document.getElementById('cli-oujra-defaut').value) || 0;
   ClientService.modifier(_clientDetailId, { tarif_prestation: v });
+}
+
+// Détail du crédit d'un client (or prêté + honoraires + modèle 3D − paiements)
+function showClientCredit() {
+  if (!_clientDetailId) return;
+  const client = ClientService.getById(_clientDetailId);
+  const lignes = BijoutierStore.query('creditsClient', l => l.client_id === _clientDetailId)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const solde = CreditService.getSoldeClient(_clientDetailId);
+  if (!lignes.length) { alert('💳 ' + client.nom + '\n\nAucun mouvement de crédit. Compte à jour ✓'); return; }
+  const labels = { charge_modele_3d: 'Modèle 3D', charge_honoraires: 'Oujra', charge_or_prete: 'Or prêté', paiement: 'Paiement' };
+  const txt = lignes.map(l => {
+    const signe = l.type === 'paiement' ? '−' : '+';
+    const gr = l.poids_or_g ? ` (${l.poids_or_g}g)` : '';
+    return `${l.date} · ${labels[l.type] || l.type} : ${signe}${l.montant_mad.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD${gr}`;
+  }).join('\n');
+  alert('💳 Crédit — ' + client.nom + '\n\n' + txt + '\n────────────\nSolde dû : ' + solde.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD');
 }
 
 // ─── Contexte Commandes : Clients est le hub unique de la rubrique Base.
@@ -2832,59 +2938,137 @@ function actionRetournerCoffre() {
 
 // ─── Module Mon Trésor (stock propre + stock client) ───
 // Renderer : lit uniquement via StockService/CoursService/ClientService/CommandeService.
-function renderTresor() {
+// Libellés lisibles des mouvements de coffre + appartenance à l'univers MÉTAL
+const COFFRE_MVT = {
+  entree_coffre_injection:      { lbl: 'Injection or',          metal: true },
+  entree_coffre_achat:          { lbl: 'Achat lingot (sbika)',  metal: true },
+  entree_coffre_retour_pret:    { lbl: 'Retour or prêté',       metal: false },
+  entree_coffre_retour_fonderie:{ lbl: 'Retour fonderie',       metal: false },
+  entree_coffre_retour_artisan: { lbl: 'Retour artisan',        metal: false },
+  entree_coffre_retour_douane:  { lbl: 'Retour douane',         metal: false },
+  entree_coffre_retour_finition:{ lbl: 'Retour finition',       metal: false },
+  sortie_coffre_pret_client:    { lbl: 'Prêt client',           metal: false },
+  sortie_coffre_fonderie:       { lbl: 'Envoi fonderie',        metal: false },
+  sortie_coffre_artisan:        { lbl: 'Affectation artisan',   metal: false },
+};
+const COFFRE_ENTREES = ['entree_coffre_injection','entree_coffre_retour_pret','entree_coffre_achat','entree_coffre_retour_fonderie','entree_coffre_retour_artisan','entree_coffre_retour_douane','entree_coffre_retour_finition'];
+
+function renderTresor() { // (= Coffre)
   const cours = CoursService.getCours();
   const config = BijoutierStore.getConfig();
 
-  const stockPropre = StockService.getStockPropre();
-  const totalPropreG = StockService.getTotalPropre();
-  const valorisationPropre = StockService.getValorisationPropre();
+  // Niveau du coffre + jauge dynamique
+  const stockOr = CoffreService.getStockOr();
+  const totalG = CoffreService.getTotalOr();
+  const valo = CoffreService.getValorisation();
+  const refMax = Math.max(100, Math.ceil(totalG / 100) * 100);
+  const pct = totalG > 0 ? Math.min(100, (totalG / refMax) * 100) : 0;
+  document.getElementById('coffre-fill').style.height = pct + '%';
+  document.getElementById('coffre-amount').textContent = totalG.toFixed(1) + ' g';
+  document.getElementById('coffre-cap').textContent = '~ ' + refMax + ' g';
+  document.getElementById('coffre-dial').textContent = totalG <= 0 ? '🔓' : (pct >= 66 ? '💰' : '🔒');
+  document.getElementById('coffre-valo').textContent = valo.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
 
+  // Crédits clients (qui me doit) — solde > 0
+  const credits = ClientService.getAll()
+    .map(c => ({ c, solde: CreditService.getSoldeClient(c.id) }))
+    .filter(x => x.solde > 0.01)
+    .sort((a, b) => b.solde - a.solde);
+  const credCont = document.getElementById('coffre-credits-list');
+  credCont.innerHTML = credits.length ? credits.map(({ c, solde }) => `
+    <div class="client-row" style="cursor:default;">
+      <div class="client-avatar" style="background:rgba(192,57,43,0.18);color:#c0392b;">${clientInitiales(c.nom)}</div>
+      <div class="client-info"><div class="client-name">${c.nom}</div><div class="client-meta">doit ${solde.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div></div>
+      <button class="nm-btn" style="font-size:11px;padding:6px 9px;" onclick="rembourserClientCoffre('${c.id}')">Rembourser</button>
+    </div>`).join('') : '<p class="text-muted">Aucun crédit en cours</p>';
+  const totalCred = credits.reduce((s, x) => s + x.solde, 0);
+  document.getElementById('coffre-credits-total').textContent = totalCred > 0 ? totalCred.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD' : '';
+
+  // Or du coffre par pureté
+  const propreCont = document.getElementById('coffre-propre-detail');
+  const purs = Object.keys(stockOr).filter(p => Math.abs(stockOr[p]) > 0.001);
+  propreCont.innerHTML = purs.length ? purs.map(purete => {
+    const g = stockOr[purete];
+    const mad = CoursService.convertirMAD(g, purete);
+    return `<div class="depot-row"><div><span class="depot-amount">${purete}</span></div><div style="text-align:right;"><div>${g.toFixed(2)}g</div><div class="depot-mad">${mad.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div></div></div>`;
+  }).join('') : '<p class="text-muted">Coffre vide — injecte de l\'or pour démarrer</p>';
+
+  // Or client consigné (gardé pour autrui)
   const stockClient = StockService.getStockClient();
   const totalClientG = StockService.getTotalClient();
-
-  document.getElementById('tresor-total-propre-g').textContent = totalPropreG.toFixed(2) + 'g';
-  document.getElementById('tresor-total-propre-mad').textContent = valorisationPropre.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
-  document.getElementById('tresor-total-client-g').textContent = totalClientG.toFixed(2) + 'g';
-  document.getElementById('tresor-total-global-g').textContent = (totalPropreG + totalClientG).toFixed(2) + 'g';
-
-  const propreCont = document.getElementById('tresor-propre-detail');
-  const puretésPropre = Object.keys(stockPropre);
-  propreCont.innerHTML = puretésPropre.length ? puretésPropre.map(purete => {
-    const g = stockPropre[purete];
-    const facteur = config.puretés[purete] || 1;
-    const mad = g * cours * facteur;
-    return `<div class="depot-row"><div><span class="depot-amount">${purete}</span></div><div style="text-align:right;"><div>${g.toFixed(2)}g</div><div class="depot-mad">${mad.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div></div></div>`;
-  }).join('') : '<p class="text-muted">Aucun stock propre enregistré</p>';
-
-  const clientCont = document.getElementById('tresor-client-detail');
+  document.getElementById('coffre-client-total').textContent = totalClientG > 0 ? totalClientG.toFixed(2) + 'g' : '';
+  const clientCont = document.getElementById('coffre-client-detail');
   const clientIds = Object.keys(stockClient);
   clientCont.innerHTML = clientIds.length ? clientIds.map(clientId => {
     const data = stockClient[clientId];
     const client = ClientService.getById(clientId);
-    const commandeIds = [...new Set(data.details.map(d => d.commande_id).filter(Boolean))];
-    const commandesLabel = commandeIds.map(id => {
-      const cmd = CommandeService.getById(id);
-      return cmd ? cmd.type : id;
-    }).join(', ');
     return `<div class="client-row" style="cursor:default;">
-      <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">${client ? client.nom.substring(0, 2).toUpperCase() : '?'}</div>
-      <div class="client-info">
-        <div class="client-name">${client ? client.nom : 'Client inconnu'}</div>
-        <div class="client-meta">${commandesLabel || '—'}</div>
-      </div>
+      <div class="client-avatar" style="background:rgba(201,168,76,0.3);color:#8B6914;">${client ? clientInitiales(client.nom) : '?'}</div>
+      <div class="client-info"><div class="client-name">${client ? client.nom : 'Client inconnu'}</div><div class="client-meta">consigné</div></div>
       <div style="text-align:right;font-size:13px;font-weight:600;color:var(--gold);">${data.total_g.toFixed(2)}g</div>
     </div>`;
-  }).join('') : '<p class="text-muted">Aucun stock client en cours</p>';
+  }).join('') : '<p class="text-muted">Aucun or client consigné</p>';
 
-  const histCont = document.getElementById('tresor-historique');
-  const mvts = [...BijoutierStore.getAll('stock_propre'), ...BijoutierStore.getAll('stock_client')]
+  // Historique des mouvements du coffre (univers métal coloré distinctement)
+  const histCont = document.getElementById('coffre-historique');
+  const mvts = BijoutierStore.getAll('stock_atelier')
+    .filter(m => COFFRE_MVT[m.type])
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 15);
+    .slice(0, 20);
   histCont.innerHTML = mvts.length ? mvts.map(m => {
-    const sens = ['entree_propre', 'balayure', 'raffinage', 'depot_client'].includes(m.type) ? '+' : '−';
-    return `<div class="depot-row"><div><span class="depot-date">${m.date}</span> · ${m.type}</div><div class="depot-amount">${sens}${m.poids_g}g ${m.purete}</div></div>`;
-  }).join('') : '<p class="text-muted">Aucun mouvement</p>';
+    const meta = COFFRE_MVT[m.type];
+    const sens = COFFRE_ENTREES.includes(m.type) ? '+' : '−';
+    const cls = meta.metal ? 'depot-row metal-row' : 'depot-row';
+    const dot = meta.metal ? '<span class="metal-dot"></span>' : '';
+    return `<div class="${cls}"><div>${dot}<span class="depot-date">${m.date}</span> · ${meta.lbl}</div><div class="depot-amount">${sens}${m.poids_g}g ${m.purete}</div></div>`;
+  }).join('') : '<p class="text-muted">Aucun mouvement de coffre</p>';
+}
+
+// ─── Actions Coffre : injecter / acheter lingot / prêter à un client ───
+let COFFRE_ACTION = null;
+function showCoffreAction(action) {
+  COFFRE_ACTION = action;
+  const form = document.getElementById('coffre-action-form');
+  form.classList.remove('hidden');
+  const titres = { injecter: '➕ Injection d\'or (apport personnel)', lingot: '🪙 Achat lingot (sbika)', preter: '🤝 Prêt d\'or à un client' };
+  document.getElementById('coffre-action-titre').textContent = titres[action];
+  const needsClient = action === 'preter';
+  const needsMontant = action === 'lingot';
+  document.getElementById('coffre-action-client-wrap').classList.toggle('hidden', !needsClient);
+  document.getElementById('coffre-action-montant-wrap').classList.toggle('hidden', !needsMontant);
+  if (needsClient) {
+    document.getElementById('coffre-action-client').innerHTML = ClientService.getAll()
+      .map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
+  }
+  document.getElementById('coffre-action-poids').value = '';
+  document.getElementById('coffre-action-montant').value = '';
+}
+
+function submitCoffreAction() {
+  const poids = parseFloat(document.getElementById('coffre-action-poids').value) || 0;
+  const purete = document.getElementById('coffre-action-purete').value;
+  if (poids <= 0) { alert('Entrez un poids'); return; }
+  if (COFFRE_ACTION === 'injecter') {
+    CoffreService.injecterOr(poids, purete);
+  } else if (COFFRE_ACTION === 'lingot') {
+    const montant = parseFloat(document.getElementById('coffre-action-montant').value) || null;
+    CoffreService.acheterOr(poids, purete, 'Lingot (sbika)', montant);
+  } else if (COFFRE_ACTION === 'preter') {
+    const clientId = document.getElementById('coffre-action-client').value;
+    if (!clientId) { alert('Choisissez un client'); return; }
+    CoffreService.preterOrClient(clientId, poids, purete);
+  }
+  document.getElementById('coffre-action-form').classList.add('hidden');
+  renderTresor();
+}
+
+function rembourserClientCoffre(clientId) {
+  const g = prompt('Combien de grammes le client rend-il ? (annule le crédit correspondant)');
+  const poids = parseFloat(g) || 0;
+  if (poids <= 0) return;
+  const purete = prompt('Pureté de l\'or rendu ?', '24K') || '24K';
+  CoffreService.rembourserOrClient(clientId, poids, purete);
+  renderTresor();
 }
 
 // ─── Authentification par rôle (PIN/mot de passe simples — outil interne, pas de vrai backend auth) ───

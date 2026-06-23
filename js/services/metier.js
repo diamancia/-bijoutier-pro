@@ -765,7 +765,7 @@ const CreditService = {
 // ═══════════════════════════════════════════
 const CoffreService = {
   getStockOr() {
-    const entrees = ['entree_coffre_achat', 'entree_coffre_retour_fonderie', 'entree_coffre_retour_artisan', 'entree_coffre_retour_douane', 'entree_coffre_retour_finition'];
+    const entrees = ['entree_coffre_injection', 'entree_coffre_retour_pret', 'entree_coffre_achat', 'entree_coffre_retour_fonderie', 'entree_coffre_retour_artisan', 'entree_coffre_retour_douane', 'entree_coffre_retour_finition'];
     const sorties = ['sortie_coffre_fonderie', 'sortie_coffre_artisan', 'sortie_coffre_pret_client'];
     const parPurete = {};
     BijoutierStore.getAll('stock_atelier').forEach(m => {
@@ -778,6 +778,41 @@ const CoffreService = {
 
   getTotalOr() {
     return Object.values(this.getStockOr()).reduce((sum, g) => sum + g, 0);
+  },
+
+  // Valorisation du coffre au cours actuel (pondérée par la pureté)
+  getValorisation() {
+    const stock = this.getStockOr();
+    return Object.keys(stock).reduce((sum, p) => sum + CoursService.convertirMAD(stock[p], p), 0);
+  },
+
+  // Injection d'or personnel (apport du bijoutier — n'impacte pas la caisse cash)
+  injecterOr(poidsG, purete = '24K', source = 'Apport personnel') {
+    if (!poidsG || poidsG <= 0) return null;
+    return StockService.mouvementer({
+      type: 'entree_coffre_injection', categorie: 'atelier', poids_g: poidsG, purete, source,
+    });
+  },
+
+  // Prêt manuel d'or à un client (hors flux commande) → crée une dette (crédit client)
+  preterOrClient(clientId, poidsG, purete = '24K', commandeId = null) {
+    if (!poidsG || poidsG <= 0) return null;
+    StockService.mouvementer({
+      type: 'sortie_coffre_pret_client', categorie: 'atelier', poids_g: poidsG, purete,
+      client_id: clientId, commande_id: commandeId, source: 'Prêt or au client',
+    });
+    return CreditService.chargerOrPrete(commandeId, clientId, poidsG, purete);
+  },
+
+  // Remboursement : le client rend l'or prêté (à la livraison) → revient au coffre + annule la dette
+  rembourserOrClient(clientId, poidsG, purete = '24K', commandeId = null) {
+    if (!poidsG || poidsG <= 0) return null;
+    StockService.mouvementer({
+      type: 'entree_coffre_retour_pret', categorie: 'atelier', poids_g: poidsG, purete,
+      client_id: clientId, commande_id: commandeId, source: 'Retour or prêté',
+    });
+    const montant = CoursService.convertirMAD(poidsG, purete);
+    return CreditService.enregistrerPaiement(commandeId, clientId, montant, 'Retour or prêté');
   },
 
   recevoirPiece(pieceId) {
