@@ -1213,18 +1213,13 @@ body {
     <!-- TAB COFFRE (catégorie à part : capital matière première du chef d'atelier) -->
     <div class="tab-content" id="tab-coffre"></div>
 
-    <!-- TAB METIER -->
+    <!-- TAB METIER (hub de modules, même présentation que Base : liste → détail) -->
     <div class="tab-content" id="tab-metier">
-      <div class="sub-tabs">
-        <button class="sub-tab active" onclick="switchMetierTab('balayures', this)"><span class="metal-dot"></span>♻️ Balayures</button>
-        <button class="sub-tab" onclick="switchMetierTab('raffinage', this)"><span class="metal-dot"></span>⚗️ Raffinage</button>
-        <button class="sub-tab" onclick="switchMetierTab('caisse', this)">💰 Caisse</button>
-        <button class="sub-tab" onclick="switchMetierTab('atelier', this)">🏭 Atelier</button>
-        <button class="sub-tab" onclick="switchMetierTab('artisans', this)">👷 Artisans</button>
-      </div>
+      <button id="metier-back" class="nm-btn hidden" style="margin-bottom:10px;font-size:13px;" onclick="metierHome()">← Modules métier</button>
+      <div id="metier-hub"></div>
 
       <!-- Balayures -->
-      <div id="met-balayures">
+      <div id="met-balayures" class="hidden">
         <div class="nm-card" id="bal-saisie-card">
           <p class="section-title" style="cursor:pointer;" onclick="toggleBalSaisie()">Saisie traitement <span id="bal-saisie-chevron" style="float:right;color:var(--text-muted);">▾</span></p>
 
@@ -1863,10 +1858,7 @@ function switchTab(tab) {
   const pill = document.createElement('div');
   pill.className = 'nav-pill';
   navEl.appendChild(pill);
-  if (tab === 'metier') {
-    const activeSub = document.querySelector('#tab-metier .sub-tabs .sub-tab.active');
-    if (activeSub && /Balayures/.test(activeSub.textContent)) initBalayures();
-  }
+  if (tab === 'metier') metierHome();
   if (tab === 'base') {
     // Toujours revenir au hub Clients (liste), même si on était dans une vue commande
     exitCommandeView();
@@ -1891,13 +1883,50 @@ function switchTab(tab) {
   }
 }
 
-function switchMetierTab(tab, btn) {
-  ['balayures','raffinage','caisse','atelier','artisans'].forEach(t => {
-    const el = document.getElementById('met-' + t);
-    if (el) el.classList.toggle('hidden', t !== tab);
+// ─── Métier = hub de modules (même présentation que Base : liste de cartes → détail) ───
+const METIER_MODULES = [
+  { id: 'balayures', ico: '♻️', nom: 'Balayures', sous: 'Récupération des chutes d\'or', metal: true },
+  { id: 'raffinage', ico: '⚗️', nom: 'Raffinage', sous: 'Conversion de pureté', metal: true },
+  { id: 'caisse',    ico: '💰', nom: 'Caisse', sous: 'Mouvements du jour', metal: false },
+  { id: 'atelier',   ico: '🏭', nom: 'Atelier', sous: 'Pipeline de fabrication', metal: false },
+  { id: 'artisans',  ico: '👷', nom: 'Artisans', sous: 'Entrées / sorties par artisan', metal: false },
+];
+
+function renderMetierHub() {
+  const cont = document.getElementById('metier-hub');
+  if (!cont) return;
+  // Scope chef : seulement Atelier + Artisans (comme avant)
+  const mods = CURRENT_ROLE === 'chef'
+    ? METIER_MODULES.filter(m => ['atelier', 'artisans'].includes(m.id))
+    : METIER_MODULES;
+  cont.innerHTML = mods.map(m => `
+    <div class="client-row" onclick="openMetier('${m.id}')">
+      <div class="client-avatar" style="${m.metal ? 'background:var(--metal-soft);color:var(--metal);' : ''}">${m.ico}</div>
+      <div class="client-info">
+        <div class="client-name">${m.nom}</div>
+        <div class="client-meta">${m.sous}</div>
+      </div>
+      <span style="font-size:20px;color:var(--text-muted);">›</span>
+    </div>`).join('');
+}
+
+function metierHome() {
+  document.getElementById('metier-back').classList.add('hidden');
+  document.getElementById('metier-hub').classList.remove('hidden');
+  METIER_MODULES.forEach(m => {
+    const el = document.getElementById('met-' + m.id);
+    if (el) el.classList.add('hidden');
   });
-  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  renderMetierHub();
+}
+
+function openMetier(tab) {
+  document.getElementById('metier-hub').classList.add('hidden');
+  document.getElementById('metier-back').classList.remove('hidden');
+  METIER_MODULES.forEach(m => {
+    const el = document.getElementById('met-' + m.id);
+    if (el) el.classList.toggle('hidden', m.id !== tab);
+  });
   if (tab === 'atelier') backToAtelierListe();
   if (tab === 'caisse') renderCaisse();
   if (tab === 'balayures') initBalayures();
@@ -3526,7 +3555,6 @@ function logout() {
 function showChefHome() {
   document.querySelector('.bottom-nav').classList.add('hidden');
   document.getElementById('chef-home-btn').classList.add('hidden');
-  document.querySelector('#tab-metier .sub-tabs').classList.remove('hidden');
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-chef-home').classList.add('active');
   updateChefHomeBadge();
@@ -3543,21 +3571,15 @@ function updateChefHomeBadge() {
 function chefEnterAtelier() {
   document.querySelector('.bottom-nav').classList.remove('hidden');
   document.getElementById('chef-home-btn').classList.remove('hidden');
-  document.querySelector('#tab-metier .sub-tabs').classList.remove('hidden');
   switchTab('base');
 }
 
 function chefEnterArtisans() {
   document.querySelector('.bottom-nav').classList.add('hidden');
   document.getElementById('chef-home-btn').classList.remove('hidden');
-  document.querySelector('#tab-metier .sub-tabs').classList.add('hidden');
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-metier').classList.add('active');
-  ['balayures','raffinage','caisse','atelier','artisans'].forEach(t => {
-    const el = document.getElementById('met-' + t);
-    if (el) el.classList.toggle('hidden', t !== 'artisans');
-  });
-  backToArtisansListe();
+  openMetier('artisans');
 }
 
 function applyRoleScope(role, artisanId) {
@@ -3577,12 +3599,7 @@ function applyRoleScope(role, artisanId) {
     mainApp.querySelector('.app-header').classList.remove('hidden');
     document.getElementById('nav-dashboard').classList.add('hidden');
     document.getElementById('nav-admin').classList.add('hidden');
-    // Scope Métier du chef (utilisé en mode ATELIER) — Cours or est désormais une
-    // catégorie de 1er niveau (nav), plus un sous-onglet Métier.
-    const chefMetier = ['Atelier', 'Artisans'];
-    document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
-      btn.classList.toggle('hidden', !chefMetier.some(k => btn.textContent.includes(k)));
-    });
+    // Scope Métier du chef = géré par renderMetierHub (Atelier + Artisans).
     // Le chef atterrit sur ses 2 grands boutons (ARTISANS / ATELIER)
     showChefHome();
     return;
