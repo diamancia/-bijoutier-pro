@@ -27,6 +27,7 @@ const BijoutierStore = (() => {
     pieces: [],                // { id, commande_id, client_id, type_metal, poids_initial_g, poids_actuel_g, purete, statut, localisation_actuelle, artisan_actuel_id, etapes_artisan_requises, douane_requise, date_creation, date_finition, date_sortie_finale, created_at }
     creditsClient: [],         // { id, client_id, commande_id, type, montant_mad, poids_or_g, cours_applique, date, notes, created_at }
     artisans: [],              // { id, nom, competences, telephone, actif, created_at }
+    demandesSortie: [],        // { id, artisan_id, poids_g, purete, statut:'en_attente'|'validee'|'refusee', date, created_at } — sorties d'or déclarées par l'artisan, à valider par le chef
     alertes: [],               // générées dynamiquement, pas persistées
   };
 
@@ -150,7 +151,7 @@ const BijoutierStore = (() => {
   // ─── PERSISTANCE LOCALE ───
   const STORAGE_KEY = 'bijoutier_pro_data';
   // Incrémenter à chaque changement de schéma : invalide les données locales obsolètes
-  const SCHEMA_VERSION = 8;
+  const SCHEMA_VERSION = 9;
 
   function _persist() {
     try {
@@ -168,6 +169,7 @@ const BijoutierStore = (() => {
         pieces: _state.pieces,
         creditsClient: _state.creditsClient,
         artisans: _state.artisans,
+        demandesSortie: _state.demandesSortie,
         config: _state.config,
         _lastSaved: new Date().toISOString(),
       };
@@ -202,6 +204,7 @@ const BijoutierStore = (() => {
       if (data.pieces) _state.pieces = data.pieces;
       if (data.creditsClient) _state.creditsClient = data.creditsClient;
       if (data.artisans) _state.artisans = data.artisans;
+      if (data.demandesSortie) _state.demandesSortie = data.demandesSortie;
       if (data.config) Object.assign(_state.config, data.config);
 
       console.log('[Store] Données restaurées depuis localStorage');

@@ -1024,6 +1024,34 @@ const ArtisanService = {
       m.artisan_id === artisanId && ['sortie_coffre_artisan', 'entree_coffre_retour_artisan'].includes(m.type))
       .reduce((s, m) => s + (m.type === 'sortie_coffre_artisan' ? m.poids_g : -m.poids_g), 0);
   },
+
+  // ── Workflow validation : l'artisan DÉCLARE une sortie, le chef la VALIDE ──
+  // Tant que non validée, l'or reste compté chez l'artisan (aucun mouvement de stock).
+  declarerSortie(artisanId, poidsG, purete = '18K') {
+    if (!poidsG || poidsG <= 0) return null;
+    return BijoutierStore.add('demandesSortie', {
+      artisan_id: artisanId, poids_g: poidsG, purete, statut: 'en_attente',
+      date: new Date().toISOString().split('T')[0],
+    });
+  },
+
+  getDemandes(statut = null, artisanId = null) {
+    return BijoutierStore.query('demandesSortie', d =>
+      (!statut || d.statut === statut) && (!artisanId || d.artisan_id === artisanId))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  },
+
+  // Le chef valide → l'or rentre au coffre (entrée chez le chef) et quitte l'artisan
+  validerSortie(demandeId) {
+    const d = BijoutierStore.getById('demandesSortie', demandeId);
+    if (!d || d.statut !== 'en_attente') return null;
+    this.recevoirOr(d.artisan_id, d.poids_g, d.purete, 'Sortie validée');
+    return BijoutierStore.update('demandesSortie', demandeId, { statut: 'validee' });
+  },
+
+  refuserSortie(demandeId) {
+    return BijoutierStore.update('demandesSortie', demandeId, { statut: 'refusee' });
+  },
 };
 
 // ═══════════════════════════════════════════

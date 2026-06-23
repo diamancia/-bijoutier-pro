@@ -603,6 +603,7 @@ body {
           <span id="offline-label" style="font-size:11px;font-weight:500;color:#1a7a4a;">En ligne</span>
         </button>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Basculer thème"></button>
+        <button id="chef-home-btn" class="nm-btn hidden" style="font-size:11px;padding:5px 10px;" onclick="showChefHome()">🏠</button>
         <button class="nm-btn" style="font-size:11px;padding:5px 10px;" onclick="logout()">⏏</button>
       </div>
     </div>
@@ -700,9 +701,51 @@ body {
       <div class="nm-card" style="text-align:center;">
         <div class="card-title" id="artisan-ledger-nom">—</div>
         <div class="text-muted">Mes entrées / sorties (grammes)</div>
+        <div class="stat-val" id="artisan-ledger-detenu" style="color:var(--gold);font-size:24px;margin-top:6px;">— g</div>
+        <div class="form-label" style="margin-bottom:0;">Or à travailler en ma possession</div>
       </div>
+
+      <button class="nm-btn nm-btn-gold nm-btn-lg" style="width:100%;" onclick="showArtisanDeclare()"><span class="btn-ico">📤</span>Déclarer une sortie d'or</button>
+      <div id="artisan-declare-form" class="nm-inset hidden" style="margin-top:8px;">
+        <div class="text-muted" style="font-size:11px;margin-bottom:6px;">L'or rendu sera validé par le chef d'atelier.</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Poids (g)</label><input class="nm-input" id="artisan-declare-poids" type="number" placeholder="10"></div>
+          <div class="form-group"><label class="form-label">Pureté</label>
+            <select class="nm-select" id="artisan-declare-purete">
+              <option value="24K">24K</option><option value="22K">22K</option>
+              <option value="18K" selected>18K</option><option value="14K">14K</option><option value="9K">9K</option>
+            </select>
+          </div>
+        </div>
+        <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="submitArtisanDeclare()">Envoyer au chef</button>
+      </div>
+
+      <div class="nm-card">
+        <p class="section-title">Mes demandes</p>
+        <div id="artisan-mes-demandes"></div>
+      </div>
+
+      <p class="section-title">Historique par jour</p>
       <div id="artisan-ledger-jours"></div>
       <button class="nm-btn" style="width:100%;padding:10px;margin-top:6px;" onclick="logout()">⏏ Déconnexion</button>
+    </div>
+
+    <!-- ACCUEIL CHEF D'ATELIER : 2 grands boutons (ARTISANS / ATELIER) -->
+    <div class="tab-content" id="tab-chef-home">
+      <div style="text-align:center;padding:14px 0 4px;">
+        <div class="card-title">Chef d'atelier</div>
+        <div class="text-muted">Que veux-tu gérer ?</div>
+      </div>
+      <button class="nm-btn nm-btn-gold" style="width:100%;padding:26px;font-size:18px;margin-top:14px;position:relative;" onclick="chefEnterArtisans()">
+        👷 ARTISANS
+        <span id="chef-home-badge" class="chip chip-red hidden" style="position:absolute;top:10px;right:10px;">0</span>
+        <div style="font-size:12px;font-weight:400;margin-top:6px;color:rgba(0,0,0,0.55);">Production par artisan · entrées / sorties</div>
+      </button>
+      <button class="nm-btn nm-btn-lg" style="width:100%;padding:26px;font-size:18px;margin-top:14px;border:2px solid var(--olive);" onclick="chefEnterAtelier()">
+        🏭 ATELIER
+        <div style="font-size:12px;font-weight:400;margin-top:6px;color:var(--text-muted);">Toute la plateforme (clients, coffre, cours…)</div>
+      </button>
+      <button class="nm-btn" style="width:100%;padding:10px;margin-top:20px;" onclick="logout()">⏏ Déconnexion</button>
     </div>
 
     <!-- TAB ADMIN (anciens Arch + Réseau fusionnés, accès admin) -->
@@ -1559,6 +1602,11 @@ body {
               </div>
               <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="submitArtisanAction()">Valider</button>
             </div>
+          </div>
+
+          <div class="nm-card hidden" id="art-det-pending-card" style="border:2px solid var(--danger);">
+            <p class="section-title">📬 Sorties à valider <span id="art-det-pending-count" class="chip chip-red"></span></p>
+            <div id="art-det-pending"></div>
           </div>
 
           <div class="nm-card">
@@ -3172,16 +3220,18 @@ function renderArtisansListe() {
   const list = ArtisanService.getAll().filter(a => a.actif);
   cont.innerHTML = list.length ? list.map(a => {
     const detenu = ArtisanService.getSoldeDetenu(a.id);
+    const nbPending = ArtisanService.getDemandes('en_attente', a.id).length;
     const chip = detenu > 0.001
       ? `<span class="chip chip-gold">${detenu.toFixed(1)}g en cours</span>`
       : '<span class="chip chip-green">à jour</span>';
+    const pendChip = nbPending ? `<span class="chip chip-red" style="margin-left:4px;">📬 ${nbPending}</span>` : '';
     return `<div class="client-row" onclick="showArtisanDetail('${a.id}')">
       <div class="client-avatar">${clientInitiales(a.nom)}</div>
       <div class="client-info">
         <div class="client-name">${a.nom}</div>
         <div class="client-meta">${(a.competences || []).join(', ') || '—'}</div>
       </div>
-      ${chip}
+      <div style="text-align:right;">${chip}${pendChip}</div>
     </div>`;
   }).join('') : '<p class="text-muted" style="text-align:center;padding:12px 0;">Aucun artisan</p>';
 }
@@ -3196,7 +3246,37 @@ function showArtisanDetail(artisanId) {
   document.getElementById('art-det-nom').textContent = a.nom;
   document.getElementById('art-det-comp').textContent = (a.competences || []).join(', ') || '—';
   document.getElementById('artisan-action-form').classList.add('hidden');
+  renderArtisanPending(artisanId);
   renderArtisanMouvements(artisanId);
+}
+
+// File des sorties déclarées par l'artisan, à valider par le chef
+function renderArtisanPending(artisanId) {
+  const pending = ArtisanService.getDemandes('en_attente', artisanId);
+  const card = document.getElementById('art-det-pending-card');
+  const cont = document.getElementById('art-det-pending');
+  document.getElementById('art-det-pending-count').textContent = pending.length;
+  card.classList.toggle('hidden', pending.length === 0);
+  cont.innerHTML = pending.map(d => `
+    <div class="depot-row">
+      <div><span class="depot-amount">${d.poids_g}g ${d.purete}</span><br><span class="text-muted" style="font-size:11px;">déclaré le ${d.date}</span></div>
+      <div style="display:flex;gap:6px;">
+        <button class="nm-btn nm-btn-green" style="font-size:11px;padding:6px 10px;" onclick="validerSortieChef('${d.id}')">✓ Valider</button>
+        <button class="nm-btn" style="font-size:11px;padding:6px 10px;border:1px solid var(--danger);color:var(--danger);" onclick="refuserSortieChef('${d.id}')">✗</button>
+      </div>
+    </div>`).join('');
+}
+
+function validerSortieChef(demandeId) {
+  ArtisanService.validerSortie(demandeId);
+  if (_artisanDetailId) showArtisanDetail(_artisanDetailId);
+  updateChefHomeBadge();
+}
+
+function refuserSortieChef(demandeId) {
+  ArtisanService.refuserSortie(demandeId);
+  if (_artisanDetailId) showArtisanDetail(_artisanDetailId);
+  updateChefHomeBadge();
 }
 
 function renderArtisanMouvements(artisanId) {
@@ -3320,6 +3400,7 @@ function logout() {
   sessionStorage.removeItem('bijoutier_artisan_id');
   document.getElementById('main-app').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('chef-home-btn').classList.add('hidden');
   ['admin', 'chef', 'artisan'].forEach(r => document.getElementById('role-form-' + r).classList.add('hidden'));
   document.getElementById('login-admin-pwd').value = '';
   document.getElementById('login-chef-pwd').value = '';
@@ -3327,6 +3408,44 @@ function logout() {
   document.getElementById('login-admin-error').textContent = '';
   document.getElementById('login-chef-error').textContent = '';
   document.getElementById('login-artisan-error').textContent = '';
+}
+
+// ─── Accueil Chef d'atelier : 2 grands boutons (ARTISANS / ATELIER) ───
+function showChefHome() {
+  document.querySelector('.bottom-nav').classList.add('hidden');
+  document.getElementById('chef-home-btn').classList.add('hidden');
+  document.querySelector('#tab-metier .sub-tabs').classList.remove('hidden');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-chef-home').classList.add('active');
+  updateChefHomeBadge();
+}
+
+function updateChefHomeBadge() {
+  const n = ArtisanService.getDemandes('en_attente').length;
+  const badge = document.getElementById('chef-home-badge');
+  if (!badge) return;
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n === 0);
+}
+
+function chefEnterAtelier() {
+  document.querySelector('.bottom-nav').classList.remove('hidden');
+  document.getElementById('chef-home-btn').classList.remove('hidden');
+  document.querySelector('#tab-metier .sub-tabs').classList.remove('hidden');
+  switchTab('base');
+}
+
+function chefEnterArtisans() {
+  document.querySelector('.bottom-nav').classList.add('hidden');
+  document.getElementById('chef-home-btn').classList.remove('hidden');
+  document.querySelector('#tab-metier .sub-tabs').classList.add('hidden');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-metier').classList.add('active');
+  ['balayures','raffinage','cours','caisse','atelier','artisans','tresor'].forEach(t => {
+    const el = document.getElementById('met-' + t);
+    if (el) el.classList.toggle('hidden', t !== 'artisans');
+  });
+  backToArtisansListe();
 }
 
 function applyRoleScope(role, artisanId) {
@@ -3344,20 +3463,15 @@ function applyRoleScope(role, artisanId) {
 
   if (role === 'chef') {
     mainApp.querySelector('.app-header').classList.remove('hidden');
-    mainApp.querySelector('.bottom-nav').classList.remove('hidden');
     document.getElementById('nav-dashboard').classList.add('hidden');
     document.getElementById('nav-admin').classList.add('hidden');
-    // Base = hub Clients unique (plus de sous-onglets globaux à filtrer ici)
-    // Le chef d'atelier gère aussi le Coffre (réserve d'or, prêts, crédits)
+    // Scope Métier du chef (utilisé en mode ATELIER)
     const chefMetier = ['Cours or', 'Atelier', 'Artisans', 'Coffre'];
     document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
       btn.classList.toggle('hidden', !chefMetier.some(k => btn.textContent.includes(k)));
     });
-    switchTab('base');
-    const atelierBtn = Array.from(document.querySelectorAll('#tab-metier .sub-tab')).find(b => b.textContent.trim() === 'Atelier');
-    if (atelierBtn) switchMetierTab('atelier', atelierBtn);
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-base').classList.add('active');
+    // Le chef atterrit sur ses 2 grands boutons (ARTISANS / ATELIER)
+    showChefHome();
     return;
   }
 
@@ -3371,16 +3485,28 @@ function applyRoleScope(role, artisanId) {
 }
 
 // ─── Vue Artisan (grand-livre journalier, grammes purs, sans aucun autre contexte) ───
+let _artisanLedgerId = null;
 function renderArtisanLedger(artisanId) {
+  _artisanLedgerId = artisanId;
   const artisan = ArtisanService.getById(artisanId);
   document.getElementById('artisan-ledger-nom').textContent = artisan ? artisan.nom : '—';
+  document.getElementById('artisan-ledger-detenu').textContent = ArtisanService.getSoldeDetenu(artisanId).toFixed(1) + ' g';
+  document.getElementById('artisan-declare-form').classList.add('hidden');
 
+  // Mes demandes (statut)
+  const statutChip = { en_attente: '<span class="chip chip-gold">en attente</span>', validee: '<span class="chip chip-green">validée</span>', refusee: '<span class="chip chip-red">refusée</span>' };
+  const demandes = ArtisanService.getDemandes(null, artisanId);
+  document.getElementById('artisan-mes-demandes').innerHTML = demandes.length ? demandes.map(d => `
+    <div class="depot-row"><div><span class="depot-amount">${d.poids_g}g ${d.purete}</span> <span class="text-muted" style="font-size:11px;">${d.date}</span></div>${statutChip[d.statut] || ''}</div>`).join('')
+    : '<p class="text-muted" style="text-align:center;padding:8px 0;">Aucune demande</p>';
+
+  // Reçu = or donné par le chef (sortie coffre→artisan + entrée pipeline) ; Rendu = retours
   const mvts = BijoutierStore.query('stock_atelier', m => m.artisan_id === artisanId);
   const parJour = {};
   mvts.forEach(m => {
     if (!parJour[m.date]) parJour[m.date] = { recu: 0, rendu: 0, delta: 0 };
-    if (m.type === 'entree_artisan') parJour[m.date].recu += m.poids_g;
-    if (m.type === 'sortie_artisan') {
+    if (m.type === 'entree_artisan' || m.type === 'sortie_coffre_artisan') parJour[m.date].recu += m.poids_g;
+    if (m.type === 'sortie_artisan' || m.type === 'entree_coffre_retour_artisan') {
       parJour[m.date].rendu += m.poids_g;
       parJour[m.date].delta += (m.poids_perte_g || 0);
     }
@@ -3401,6 +3527,23 @@ function renderArtisanLedger(artisanId) {
       <div style="text-align:center;margin-top:6px;font-weight:600;" class="${signeClass}">Δ ${signe}${j.delta.toFixed(2)}g</div>
     </div>`;
   }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun mouvement enregistré</p>';
+}
+
+function showArtisanDeclare() {
+  const f = document.getElementById('artisan-declare-form');
+  f.classList.toggle('hidden');
+  document.getElementById('artisan-declare-poids').value = '';
+}
+
+function submitArtisanDeclare() {
+  if (!_artisanLedgerId) return;
+  const poids = parseFloat(document.getElementById('artisan-declare-poids').value) || 0;
+  const purete = document.getElementById('artisan-declare-purete').value;
+  if (poids <= 0) { alert('Entrez un poids'); return; }
+  ArtisanService.declarerSortie(_artisanLedgerId, poids, purete);
+  document.getElementById('artisan-declare-form').classList.add('hidden');
+  renderArtisanLedger(_artisanLedgerId);
+  alert('✅ Sortie déclarée : ' + poids + 'g ' + purete + '. En attente de validation par le chef.');
 }
 
 // ─── Dashboard Admin : CA par client + total (lecture pure via CAService/ClientService) ───
