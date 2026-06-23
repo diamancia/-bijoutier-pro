@@ -804,6 +804,7 @@ body {
           <!-- Sous-onglets de la fiche client -->
           <div class="sub-tabs">
             <button class="sub-tab active" id="cli-tab-commandes" onclick="switchClientTab('commandes', this)">Commandes</button>
+            <button class="sub-tab" id="cli-tab-oujra" onclick="switchClientTab('oujra', this)">Oujra</button>
             <button class="sub-tab" id="cli-tab-articles" onclick="switchClientTab('articles', this)">Articles</button>
             <button class="sub-tab" id="cli-tab-galerie" onclick="switchClientTab('galerie', this)">Galerie</button>
             <button class="sub-tab" id="cli-tab-depots" onclick="switchClientTab('depots', this)">Dépôts</button>
@@ -812,6 +813,25 @@ body {
           <div id="cli-pane-commandes">
             <div id="cli-commandes-list"></div>
             <button class="nm-btn nm-btn-gold nm-btn-lg" style="width:100%;margin-top:8px;" onclick="showAddCommandePourClient()"><span class="btn-ico">💍</span>Nouvelle commande</button>
+          </div>
+
+          <div id="cli-pane-oujra" class="hidden">
+            <div class="nm-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div class="form-label" style="margin-bottom:2px;">Tarif Oujra par défaut</div>
+                  <div class="text-muted" style="font-size:11px;">Pré-rempli à la prise de commande</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input class="nm-input" id="cli-oujra-defaut" type="number" style="width:90px;text-align:right;" onchange="saveOujraDefaut()">
+                  <span class="text-muted">MAD/art.</span>
+                </div>
+              </div>
+            </div>
+            <div class="nm-card">
+              <p class="section-title">Honoraires (Oujra) par commande <span id="cli-oujra-total" style="float:right;color:var(--gold);"></span></p>
+              <div id="cli-oujra-list"></div>
+            </div>
           </div>
 
           <div id="cli-pane-articles" class="hidden">
@@ -981,7 +1001,7 @@ body {
             <p class="section-title">Nouvelle commande</p>
             <div class="form-group">
               <label class="form-label">Client</label>
-              <select class="nm-select" id="cmd-add-client"></select>
+              <select class="nm-select" id="cmd-add-client" onchange="onCmdClientChange()"></select>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -1030,6 +1050,24 @@ body {
                 <input class="nm-input" type="date" id="cmd-add-livraison">
               </div>
             </div>
+
+            <!-- Oujra (honoraires) : montant MAD par article, défaut = tarif du client, ajustable -->
+            <div class="nm-inset" style="margin-top:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span class="form-label" style="margin-bottom:0;">💰 Oujra (honoraires)</span>
+                <span class="stat-val" id="cmd-oujra-total" style="color:var(--gold);">— MAD</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombre d'articles</label>
+                <input class="nm-input" id="cmd-oujra-nb" type="number" min="1" value="1" oninput="renderOujraInputs()">
+              </div>
+              <div class="filter-tabs">
+                <button type="button" class="filter-tab active" id="oujra-mode-uni" onclick="selectOujraMode('uniforme', this)">Même Oujra</button>
+                <button type="button" class="filter-tab" id="oujra-mode-art" onclick="selectOujraMode('par_article', this)">Oujra / article</button>
+              </div>
+              <div id="cmd-oujra-fields"></div>
+            </div>
+
             <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;" onclick="submitAddCommande()">Créer la commande</button>
           </div>
         </div>
@@ -2012,7 +2050,7 @@ function showClientDetail(clientId) {
   // Onglet Commandes par défaut + rendu des 3 rubriques du client
   document.querySelectorAll('#client-detail-view .sub-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('cli-tab-commandes').classList.add('active');
-  ['commandes','articles','galerie','depots'].forEach(p =>
+  ['commandes','oujra','articles','galerie','depots'].forEach(p =>
     document.getElementById('cli-pane-' + p).classList.toggle('hidden', p !== 'commandes'));
   renderClientCommandes(clientId);
   renderClientArticles(clientId);
@@ -2067,10 +2105,11 @@ function filterClients() {
 
 // ─── Hub fiche client : Commandes / Articles / Galerie / Dépôts ───
 function switchClientTab(pane, btn) {
-  ['commandes','articles','galerie','depots'].forEach(p =>
+  ['commandes','oujra','articles','galerie','depots'].forEach(p =>
     document.getElementById('cli-pane-' + p).classList.toggle('hidden', p !== pane));
   btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  if (pane === 'oujra') renderClientOujra(_clientDetailId);
 }
 
 function renderClientCommandes(clientId) {
@@ -2117,6 +2156,34 @@ function renderClientGalerie(clientId) {
   }).join('') : '<p class="text-muted" style="grid-column:1/3;text-align:center;padding:12px 0;">Aucune pièce en galerie</p>';
 }
 
+// ─── Oujra (honoraires) côté fiche client : tarif par défaut + détail par commande ───
+function renderClientOujra(clientId) {
+  const client = ClientService.getById(clientId);
+  if (!client) return;
+  document.getElementById('cli-oujra-defaut').value = client.tarif_prestation != null ? client.tarif_prestation : 100;
+
+  const cmds = ClientService.getCommandes(clientId);
+  const cont = document.getElementById('cli-oujra-list');
+  let total = 0;
+  cont.innerHTML = cmds.length ? cmds.map(c => {
+    const o = c.honoraires_mad || 0;
+    total += o;
+    const detail = c.nb_articles ? `${c.nb_articles} art.${c.oujra_mode === 'par_article' ? ' (par art.)' : ''}` : '';
+    const statut = c.statut === 'livree' ? '<span class="chip chip-green">Livrée</span>' : '<span class="chip chip-gold">En cours</span>';
+    return `<div class="depot-row">
+      <div><span class="depot-amount">${c.type}</span> <span class="text-muted">${detail}</span><br><span class="text-muted" style="font-size:11px;">${c.date_depot_or} ${statut}</span></div>
+      <div class="depot-mad">${o.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</div>
+    </div>`;
+  }).join('') : '<p class="text-muted" style="text-align:center;padding:8px 0;">Aucune commande</p>';
+  document.getElementById('cli-oujra-total').textContent = total.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
+}
+
+function saveOujraDefaut() {
+  if (!_clientDetailId) return;
+  const v = parseFloat(document.getElementById('cli-oujra-defaut').value) || 0;
+  ClientService.modifier(_clientDetailId, { tarif_prestation: v });
+}
+
 // ─── Contexte Commandes : Clients est le hub unique de la rubrique Base.
 // Les vues commande/camembert/réparation vivent dans #sub-commandes ; on bascule
 // la visibilité entre #sub-clients et #sub-commandes plutôt que via un onglet. ───
@@ -2133,7 +2200,10 @@ function showAddCommandePourClient() {
   const clientId = _clientDetailId;
   enterCommandeView();
   showAddCommande();
-  if (clientId) document.getElementById('cmd-add-client').value = clientId;
+  if (clientId) {
+    document.getElementById('cmd-add-client').value = clientId;
+    renderOujraInputs(); // ré-applique le tarif Oujra du client présélectionné
+  }
 }
 
 // ─── Module Commandes (renderer : lit via CommandeService/ClientService, n'écrit jamais directement) ───
@@ -2443,6 +2513,63 @@ function showAddCommande() {
   document.getElementById('cmd-add-client').innerHTML = ClientService.getAll()
     .map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
   document.getElementById('cmd-add-depot').value = new Date().toISOString().split('T')[0];
+  // Init Oujra : 1 article, mode uniforme, défaut = tarif du client sélectionné
+  document.getElementById('cmd-oujra-nb').value = 1;
+  selectOujraMode('uniforme', document.getElementById('oujra-mode-uni'));
+}
+
+// ─── Oujra (honoraires) à la prise de commande ───
+let OUJRA_MODE = 'uniforme'; // 'uniforme' (même montant/article) | 'par_article'
+
+function onCmdClientChange() {
+  // Le défaut Oujra suit le tarif du client choisi (pré-rempli, ajustable)
+  renderOujraInputs();
+}
+
+function selectOujraMode(mode, btn) {
+  OUJRA_MODE = mode;
+  document.getElementById('oujra-mode-uni').classList.toggle('active', mode === 'uniforme');
+  document.getElementById('oujra-mode-art').classList.toggle('active', mode === 'par_article');
+  renderOujraInputs();
+}
+
+function renderOujraInputs() {
+  const nb = Math.max(1, parseInt(document.getElementById('cmd-oujra-nb').value) || 1);
+  const clientId = document.getElementById('cmd-add-client').value;
+  const defaut = clientId ? ClientService.getTarifPrestation(clientId) : 100;
+  const cont = document.getElementById('cmd-oujra-fields');
+  if (OUJRA_MODE === 'uniforme') {
+    cont.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">Oujra par article (MAD) · × ${nb} article(s)</label>
+        <input class="nm-input" id="cmd-oujra-uni" type="number" value="${defaut}" oninput="calcOujraTotal()">
+      </div>`;
+  } else {
+    cont.innerHTML = Array.from({ length: nb }, (_, i) => `
+      <div class="form-group">
+        <label class="form-label">Oujra article ${i + 1} (MAD)</label>
+        <input class="nm-input cmd-oujra-art" type="number" value="${defaut}" oninput="calcOujraTotal()">
+      </div>`).join('');
+  }
+  calcOujraTotal();
+}
+
+function getOujraSaisie() {
+  const nb = Math.max(1, parseInt(document.getElementById('cmd-oujra-nb').value) || 1);
+  let articles;
+  if (OUJRA_MODE === 'uniforme') {
+    const v = parseFloat(document.getElementById('cmd-oujra-uni').value) || 0;
+    articles = Array.from({ length: nb }, () => v);
+  } else {
+    articles = Array.from(document.querySelectorAll('.cmd-oujra-art')).map(el => parseFloat(el.value) || 0);
+  }
+  const total = articles.reduce((s, v) => s + v, 0);
+  return { nb, mode: OUJRA_MODE, articles, total };
+}
+
+function calcOujraTotal() {
+  const { total } = getOujraSaisie();
+  document.getElementById('cmd-oujra-total').textContent = total.toLocaleString('fr-MA', { maximumFractionDigits: 0 }) + ' MAD';
 }
 
 function submitAddCommande() {
@@ -2454,6 +2581,7 @@ function submitAddCommande() {
   const pierres = document.getElementById('cmd-add-pierres').value.trim() || 'Sans pierres';
   const depot = document.getElementById('cmd-add-depot').value;
   const livraison = document.getElementById('cmd-add-livraison').value;
+  const oujra = getOujraSaisie();
 
   if (!clientId || !type || !poids || !depot || !livraison) {
     alert('Merci de remplir tous les champs obligatoires');
@@ -2463,6 +2591,10 @@ function submitAddCommande() {
   CommandeService.creer({
     client_id: clientId, type, poids_or_g: poids, purete, taille, pierres,
     date_depot_or: depot, date_livraison_prevue: livraison,
+    honoraires_mad: oujra.total,
+    nb_articles: oujra.nb,
+    oujra_mode: oujra.mode,
+    oujra_articles: oujra.articles,
   });
 
   backToClientDetail();
