@@ -1098,6 +1098,13 @@ body {
             </div>
             <div id="camembert-legende"></div>
           </div>
+
+          <!-- CA par client (histogramme) — rapatrié ici, sa place logique -->
+          <div class="nm-card">
+            <p class="section-title">CA par client</p>
+            <div class="chart-bars" id="ca-chart-bars" style="height:100px;"></div>
+            <div id="ca-legende" style="margin-top:8px;"></div>
+          </div>
         </div>
 
         <div id="add-commande-view" class="hidden">
@@ -1433,22 +1440,6 @@ body {
             <div id="cours-historique-list"></div>
           </div>
 
-          <!-- Histogramme CA par client -->
-          <div class="nm-card">
-            <p class="section-title">CA par client</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Du</label>
-                <input class="nm-input" type="date" id="ca-debut" onchange="renderCAHistogramme()">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Au</label>
-                <input class="nm-input" type="date" id="ca-fin" onchange="renderCAHistogramme()">
-              </div>
-            </div>
-            <div class="chart-bars" id="ca-chart-bars" style="height:100px;"></div>
-            <div id="ca-legende" style="margin-top:8px;"></div>
-          </div>
         </div>
 
         <!-- Sous-vue Achats divers -->
@@ -2107,7 +2098,6 @@ function initCoursModule() {
   hideAchatsDivers();
   refreshCoursBar();
   renderCoursHistorique();
-  renderCAHistogramme();
 }
 
 function selectCoursCarat(carat, btn) {
@@ -2143,7 +2133,6 @@ function saveCours() {
   collapseCoursForm();
   refreshCoursBar();
   renderCoursHistorique();
-  renderCAHistogramme();
   if (typeof renderTresor === 'function') renderTresor();
 }
 
@@ -2185,10 +2174,14 @@ function renderCoursHistorique() {
 }
 
 function renderCAHistogramme() {
-  const debut = document.getElementById('ca-debut').value || null;
-  const fin = document.getElementById('ca-fin').value || null;
-  const repartition = CAService.repartitionParClient(debut, fin);
+  // Utilise la période de la vue Parts clients (ana-debut/ana-fin)
+  const debutEl = document.getElementById('ana-debut');
+  const finEl = document.getElementById('ana-fin');
+  const debut = (debutEl && debutEl.value) || null;
+  const fin = (finEl && finEl.value) || null;
   const bars = document.getElementById('ca-chart-bars');
+  if (!bars) return;
+  const repartition = CAService.repartitionParClient(debut, fin);
   const legende = document.getElementById('ca-legende');
 
   if (!repartition.length) {
@@ -2676,6 +2669,7 @@ function setAnaMetric(metric, btn) {
 function renderAnalyse() {
   if (ANA_MODE === 'pie') renderCamembert();
   else renderEvolution();
+  renderCAHistogramme(); // CA par client (histogramme) suit la même période
 }
 
 function anaUnite(v) {
