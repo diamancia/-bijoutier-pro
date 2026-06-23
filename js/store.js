@@ -150,7 +150,7 @@ const BijoutierStore = (() => {
   // ─── PERSISTANCE LOCALE ───
   const STORAGE_KEY = 'bijoutier_pro_data';
   // Incrémenter à chaque changement de schéma : invalide les données locales obsolètes
-  const SCHEMA_VERSION = 7;
+  const SCHEMA_VERSION = 8;
 
   function _persist() {
     try {

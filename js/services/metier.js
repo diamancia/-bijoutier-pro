@@ -992,6 +992,38 @@ const ArtisanService = {
     return BijoutierStore.query('stock_atelier', m => m.piece_id === pieceId && ['entree_artisan', 'sortie_artisan'].includes(m.type))
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   },
+
+  // ── Flux direct chef ↔ artisan (grammes uniquement, hors pièce) ──
+  // Le chef DONNE de l'or (sort du coffre → chez l'artisan) puis le REÇOIT (retour au coffre).
+  donnerOr(artisanId, poidsG, purete = '18K', note = '') {
+    if (!poidsG || poidsG <= 0) return null;
+    return StockService.mouvementer({
+      type: 'sortie_coffre_artisan', categorie: 'atelier', poids_g: poidsG, purete,
+      artisan_id: artisanId, source: "Remise or à l'artisan", notes: note,
+    });
+  },
+
+  recevoirOr(artisanId, poidsG, purete = '18K', note = '') {
+    if (!poidsG || poidsG <= 0) return null;
+    return StockService.mouvementer({
+      type: 'entree_coffre_retour_artisan', categorie: 'atelier', poids_g: poidsG, purete,
+      artisan_id: artisanId, source: "Retour or de l'artisan", notes: note,
+    });
+  },
+
+  // Mouvements directs (donné/rendu) d'un artisan, plus récent d'abord
+  getLedger(artisanId) {
+    return BijoutierStore.query('stock_atelier', m =>
+      m.artisan_id === artisanId && ['sortie_coffre_artisan', 'entree_coffre_retour_artisan'].includes(m.type))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  },
+
+  // Or actuellement détenu par l'artisan = donné − rendu (en grammes)
+  getSoldeDetenu(artisanId) {
+    return BijoutierStore.query('stock_atelier', m =>
+      m.artisan_id === artisanId && ['sortie_coffre_artisan', 'entree_coffre_retour_artisan'].includes(m.type))
+      .reduce((s, m) => s + (m.type === 'sortie_coffre_artisan' ? m.poids_g : -m.poids_g), 0);
+  },
 };
 
 // ═══════════════════════════════════════════

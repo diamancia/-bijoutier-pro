@@ -1124,6 +1124,7 @@ body {
         <button class="sub-tab" onclick="switchMetierTab('cours', this)">Cours or</button>
         <button class="sub-tab" onclick="switchMetierTab('caisse', this)">Caisse</button>
         <button class="sub-tab" onclick="switchMetierTab('atelier', this)">Atelier</button>
+        <button class="sub-tab" onclick="switchMetierTab('artisans', this)">👷 Artisans</button>
         <button class="sub-tab" onclick="switchMetierTab('tresor', this)">🔐 Coffre</button>
       </div>
 
@@ -1486,6 +1487,87 @@ body {
       </div>
 
       <!-- Mon Trésor (stock propre + stock client) -->
+      <!-- Artisans (vue chef d'atelier : entrée/sortie d'or par artisan, grammes uniquement) -->
+      <div id="met-artisans" class="hidden">
+        <div id="artisans-list-view">
+          <div class="nm-card" style="padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="section-title" style="margin-bottom:0;">Mes artisans</span>
+              <button class="nm-btn" style="font-size:11px;padding:6px 10px;" onclick="showAddArtisan()">+ Artisan</button>
+            </div>
+            <div class="text-muted" style="margin-top:4px;font-size:11px;">L'artisan reçoit de l'or à travailler, jamais d'argent.</div>
+          </div>
+          <div id="artisans-cards"></div>
+
+          <div id="add-artisan-form" class="nm-card hidden">
+            <p class="section-title">Nouvel artisan</p>
+            <div class="form-group">
+              <label class="form-label">Nom</label>
+              <input class="nm-input" id="art-add-nom" placeholder="Nom complet">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Compétence</label>
+                <input class="nm-input" id="art-add-comp" list="artisan-competences" placeholder="sertissage">
+                <datalist id="artisan-competences">
+                  <option value="préparation"></option><option value="pré-polissage"></option>
+                  <option value="sertissage"></option><option value="gravure"></option><option value="finition"></option>
+                </datalist>
+              </div>
+              <div class="form-group">
+                <label class="form-label">PIN (4 chiffres)</label>
+                <input class="nm-input" id="art-add-pin" inputmode="numeric" maxlength="4" placeholder="0000">
+              </div>
+            </div>
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="submitAddArtisan()">Enregistrer</button>
+          </div>
+        </div>
+
+        <div id="artisan-detail-view" class="hidden">
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToArtisansListe()">← Retour</button>
+          <div class="nm-card">
+            <div class="client-detail-header">
+              <div class="client-detail-avatar" id="art-det-avatar">—</div>
+              <div>
+                <div class="card-title" id="art-det-nom">—</div>
+                <div class="text-muted" id="art-det-comp">—</div>
+              </div>
+            </div>
+            <div class="nm-inset" style="text-align:center;">
+              <div class="form-label" style="margin-bottom:2px;">Or actuellement chez l'artisan</div>
+              <div class="stat-val" id="art-det-detenu" style="color:var(--gold);font-size:24px;">— g</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="nm-btn nm-btn-gold nm-btn-lg" style="flex:1;" onclick="showArtisanAction('donner')"><span class="btn-ico">📤</span>Donner or</button>
+              <button class="nm-btn nm-btn-green nm-btn-lg" style="flex:1;" onclick="showArtisanAction('recevoir')"><span class="btn-ico">📥</span>Recevoir or</button>
+            </div>
+
+            <div id="artisan-action-form" class="nm-inset hidden" style="margin-top:8px;">
+              <p class="section-title" id="artisan-action-titre" style="margin-bottom:6px;">—</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Poids (g)</label>
+                  <input class="nm-input" id="artisan-action-poids" type="number" placeholder="10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Pureté</label>
+                  <select class="nm-select" id="artisan-action-purete">
+                    <option value="24K">24K</option><option value="22K">22K</option>
+                    <option value="18K" selected>18K</option><option value="14K">14K</option><option value="9K">9K</option>
+                  </select>
+                </div>
+              </div>
+              <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="submitArtisanAction()">Valider</button>
+            </div>
+          </div>
+
+          <div class="nm-card">
+            <p class="section-title">Mouvements (entrées / sorties) <span id="art-det-net" style="float:right;"></span></p>
+            <div id="artisan-ledger-list"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="met-tresor" class="hidden">
         <!-- Coffre dynamique : réserve d'or du bijoutier, alimentée par injections -->
         <div class="nm-card">
@@ -1674,7 +1756,7 @@ function switchTab(tab) {
 }
 
 function switchMetierTab(tab, btn) {
-  ['balayures','raffinage','cours','caisse','atelier','tresor'].forEach(t => {
+  ['balayures','raffinage','cours','caisse','atelier','artisans','tresor'].forEach(t => {
     const el = document.getElementById('met-' + t);
     if (el) el.classList.toggle('hidden', t !== tab);
   });
@@ -1686,6 +1768,7 @@ function switchMetierTab(tab, btn) {
   if (tab === 'caisse') renderCaisse();
   if (tab === 'balayures') initBalayures();
   if (tab === 'raffinage') renderRaffinage();
+  if (tab === 'artisans') backToArtisansListe();
 }
 
 // Entrée module Balayures : liste + synthèse, et saisie repliée si historique présent
@@ -3071,6 +3154,110 @@ function rembourserClientCoffre(clientId) {
   renderTresor();
 }
 
+// ─── Module Artisans (vue chef d'atelier : entrée/sortie d'or par artisan) ───
+let _artisanDetailId = null;
+let ARTISAN_ACTION = null;
+
+function backToArtisansListe() {
+  _artisanDetailId = null;
+  document.getElementById('artisan-detail-view').classList.add('hidden');
+  document.getElementById('artisans-list-view').classList.remove('hidden');
+  document.getElementById('add-artisan-form').classList.add('hidden');
+  renderArtisansListe();
+}
+
+function renderArtisansListe() {
+  const cont = document.getElementById('artisans-cards');
+  if (!cont) return;
+  const list = ArtisanService.getAll().filter(a => a.actif);
+  cont.innerHTML = list.length ? list.map(a => {
+    const detenu = ArtisanService.getSoldeDetenu(a.id);
+    const chip = detenu > 0.001
+      ? `<span class="chip chip-gold">${detenu.toFixed(1)}g en cours</span>`
+      : '<span class="chip chip-green">à jour</span>';
+    return `<div class="client-row" onclick="showArtisanDetail('${a.id}')">
+      <div class="client-avatar">${clientInitiales(a.nom)}</div>
+      <div class="client-info">
+        <div class="client-name">${a.nom}</div>
+        <div class="client-meta">${(a.competences || []).join(', ') || '—'}</div>
+      </div>
+      ${chip}
+    </div>`;
+  }).join('') : '<p class="text-muted" style="text-align:center;padding:12px 0;">Aucun artisan</p>';
+}
+
+function showArtisanDetail(artisanId) {
+  const a = ArtisanService.getById(artisanId);
+  if (!a) return;
+  _artisanDetailId = artisanId;
+  document.getElementById('artisans-list-view').classList.add('hidden');
+  document.getElementById('artisan-detail-view').classList.remove('hidden');
+  document.getElementById('art-det-avatar').textContent = clientInitiales(a.nom);
+  document.getElementById('art-det-nom').textContent = a.nom;
+  document.getElementById('art-det-comp').textContent = (a.competences || []).join(', ') || '—';
+  document.getElementById('artisan-action-form').classList.add('hidden');
+  renderArtisanMouvements(artisanId);
+}
+
+function renderArtisanMouvements(artisanId) {
+  document.getElementById('art-det-detenu').textContent = ArtisanService.getSoldeDetenu(artisanId).toFixed(1) + ' g';
+  const ledger = ArtisanService.getLedger(artisanId);
+  const donne = ledger.filter(m => m.type === 'sortie_coffre_artisan').reduce((s, m) => s + m.poids_g, 0);
+  const rendu = ledger.filter(m => m.type === 'entree_coffre_retour_artisan').reduce((s, m) => s + m.poids_g, 0);
+  document.getElementById('art-det-net').innerHTML = `<span style="color:var(--gold);">↑${donne.toFixed(1)}g</span> · <span style="color:var(--success);">↓${rendu.toFixed(1)}g</span>`;
+  const heure = at => at ? new Date(at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+  const cont = document.getElementById('artisan-ledger-list');
+  cont.innerHTML = ledger.length ? ledger.map(m => {
+    const entree = m.type === 'sortie_coffre_artisan'; // sort du coffre = ENTRÉE chez l'artisan
+    const lbl = entree ? 'Entrée (or donné)' : 'Sortie (or rendu)';
+    const col = entree ? 'var(--gold)' : 'var(--success)';
+    const signe = entree ? '+' : '−';
+    return `<div class="depot-row">
+      <div><span class="depot-date">${m.date} ${heure(m.created_at)}</span><br><span style="color:${col};font-weight:500;">${lbl}</span></div>
+      <div class="depot-amount" style="color:${col};">${signe}${m.poids_g}g ${m.purete}</div>
+    </div>`;
+  }).join('') : '<p class="text-muted">Aucun mouvement</p>';
+}
+
+function showArtisanAction(action) {
+  ARTISAN_ACTION = action;
+  const form = document.getElementById('artisan-action-form');
+  form.classList.remove('hidden');
+  document.getElementById('artisan-action-titre').textContent = action === 'donner'
+    ? "📤 Donner de l'or à l'artisan" : "📥 Recevoir l'or travaillé";
+  document.getElementById('artisan-action-poids').value = '';
+}
+
+function submitArtisanAction() {
+  if (!_artisanDetailId) return;
+  const poids = parseFloat(document.getElementById('artisan-action-poids').value) || 0;
+  const purete = document.getElementById('artisan-action-purete').value;
+  if (poids <= 0) { alert('Entrez un poids'); return; }
+  if (ARTISAN_ACTION === 'donner') ArtisanService.donnerOr(_artisanDetailId, poids, purete);
+  else ArtisanService.recevoirOr(_artisanDetailId, poids, purete);
+  document.getElementById('artisan-action-form').classList.add('hidden');
+  renderArtisanMouvements(_artisanDetailId);
+}
+
+function showAddArtisan() {
+  const f = document.getElementById('add-artisan-form');
+  f.classList.toggle('hidden');
+  document.getElementById('art-add-nom').value = '';
+  document.getElementById('art-add-comp').value = '';
+  document.getElementById('art-add-pin').value = '';
+}
+
+function submitAddArtisan() {
+  const nom = document.getElementById('art-add-nom').value.trim();
+  const comp = document.getElementById('art-add-comp').value.trim();
+  const pin = document.getElementById('art-add-pin').value.trim();
+  if (!nom) { alert('Le nom est obligatoire'); return; }
+  const a = ArtisanService.ajouter({ nom, competences: comp ? [comp] : [] });
+  if (pin) BijoutierStore.update('artisans', a.id, { pin });
+  document.getElementById('add-artisan-form').classList.add('hidden');
+  renderArtisansListe();
+}
+
 // ─── Authentification par rôle (PIN/mot de passe simples — outil interne, pas de vrai backend auth) ───
 const ROLE_PASSWORDS = { admin: '1234', chef: '5678' };
 let CURRENT_ROLE = null;
@@ -3162,7 +3349,7 @@ function applyRoleScope(role, artisanId) {
     document.getElementById('nav-admin').classList.add('hidden');
     // Base = hub Clients unique (plus de sous-onglets globaux à filtrer ici)
     // Le chef d'atelier gère aussi le Coffre (réserve d'or, prêts, crédits)
-    const chefMetier = ['Cours or', 'Atelier', 'Coffre'];
+    const chefMetier = ['Cours or', 'Atelier', 'Artisans', 'Coffre'];
     document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
       btn.classList.toggle('hidden', !chefMetier.some(k => btn.textContent.includes(k)));
     });
