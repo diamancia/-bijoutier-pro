@@ -591,7 +591,7 @@ body {
 
     <!-- TAB DASHBOARD -->
     <div class="tab-content active" id="tab-dashboard">
-      <p class="section-title">Aujourd'hui · 19 juin 2026</p>
+      <p class="section-title" id="dash-date">Aujourd'hui</p>
 
       <!-- Statut connexion -->
       <div class="nm-card" style="padding:12px 14px;">
@@ -622,21 +622,21 @@ body {
         <p class="section-title">Dépôts du jour</p>
         <div class="stat-row">
           <div class="stat-box">
-            <div class="stat-val" id="dash-nb-depots">5</div>
+            <div class="stat-val" id="dash-nb-depots">—</div>
             <div class="stat-lbl">Dépôts clients</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val" id="dash-nb-images">3</div>
-            <div class="stat-lbl">Photos commandes</div>
+            <div class="stat-val" id="dash-nb-commandes">—</div>
+            <div class="stat-lbl">Commandes du jour</div>
           </div>
         </div>
         <div class="stat-row">
           <div class="stat-box">
-            <div class="stat-val" id="dash-g-jour">15.3g</div>
+            <div class="stat-val" id="dash-g-jour">—</div>
             <div class="stat-lbl">Or reçu (g)</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val" id="dash-mad-jour">9 823</div>
+            <div class="stat-val" id="dash-mad-jour">—</div>
             <div class="stat-lbl">MAD engagés</div>
           </div>
         </div>
@@ -645,33 +645,7 @@ body {
       <!-- Activité récente -->
       <div class="nm-card">
         <p class="section-title">Activité récente</p>
-        <div id="dash-activity">
-          <div class="depot-row" style="font-size:12px;">
-            <span style="font-size:16px;">⚖️</span>
-            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Balayure enregistrée</span><br><span class="text-muted">8.2g 24K récupéré · Incinération</span></div>
-            <span class="text-muted">09:10</span>
-          </div>
-          <div class="depot-row" style="font-size:12px;">
-            <span style="font-size:16px;">👤</span>
-            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Dépôt Hassan Benjelloun</span><br><span class="text-muted">3.5g · 2 247 MAD</span></div>
-            <span class="text-muted">09:15</span>
-          </div>
-          <div class="depot-row" style="font-size:12px;">
-            <span style="font-size:16px;">📸</span>
-            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Photo commande ajoutée</span><br><span class="text-muted">Bague · Youssef Kettani</span></div>
-            <span class="text-muted">10:02</span>
-          </div>
-          <div class="depot-row" style="font-size:12px;">
-            <span style="font-size:16px;">💰</span>
-            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Snapshot caisse</span><br><span class="text-muted">Vente bijou · 5.2g · 3 338 MAD</span></div>
-            <span class="text-muted">11:42</span>
-          </div>
-          <div class="depot-row" style="font-size:12px;border:none;">
-            <span style="font-size:16px;">🔁</span>
-            <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">Raffinage effectué</span><br><span class="text-muted">10g 24K → 13.3g 18K</span></div>
-            <span class="text-muted">14:20</span>
-          </div>
-        </div>
+        <div id="dash-activity"></div>
       </div>
 
       <!-- File hors-ligne -->
@@ -1623,6 +1597,7 @@ function switchTab(tab) {
     exitCommandeView();
     backToClients();
   }
+  if (tab === 'dashboard') renderDashboard();
 }
 
 function switchMetierTab(tab, btn) {
@@ -2992,7 +2967,7 @@ function applyRoleScope(role, artisanId) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('hidden'));
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('hidden'));
     switchTab('dashboard');
-    renderDashboardCA();
+    renderDashboard();
     return;
   }
 
@@ -3056,6 +3031,58 @@ function renderArtisanLedger(artisanId) {
 }
 
 // ─── Dashboard Admin : CA par client + total (lecture pure via CAService/ClientService) ───
+// ─── Dashboard (Accueil admin) : date + dépôts du jour + activité récente, tout réel ───
+function renderDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  const dateEl = document.getElementById('dash-date');
+  if (dateEl) {
+    const d = new Date();
+    dateEl.textContent = "Aujourd'hui · " + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  renderDashboardCA();
+
+  // Dépôts du jour (mouvements stock_client type depot_client datés d'aujourd'hui)
+  const depotsJour = BijoutierStore.query('stock_client', m => m.type === 'depot_client' && m.date === today);
+  const cmdsJour = BijoutierStore.query('commandes', c => (c.date_depot_or === today) || ((c.created_at || '').slice(0, 10) === today));
+  const gJour = depotsJour.reduce((s, m) => s + (m.poids_g || 0), 0);
+  const madJour = depotsJour.reduce((s, m) => s + (m.poids_g || 0) * (m.cours_applique || 0), 0);
+  setText('dash-nb-depots', depotsJour.length);
+  setText('dash-nb-commandes', cmdsJour.length);
+  setText('dash-g-jour', gJour.toFixed(1) + 'g');
+  setText('dash-mad-jour', Math.round(madJour).toLocaleString('fr-MA'));
+
+  renderDashboardActivity();
+}
+
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+function renderDashboardActivity() {
+  const cont = document.getElementById('dash-activity');
+  if (!cont) return;
+  const ev = [];
+  BijoutierStore.getAll('balayures').forEach(b => ev.push({ at: b.created_at, icon: '⚖️', titre: 'Balayure enregistrée', sous: `${b.poids_pur_24k_g}g 24K · ${b.type || ''}` }));
+  BijoutierStore.query('stock_client', m => m.type === 'depot_client').forEach(m => {
+    const cli = ClientService.getById(m.client_id);
+    ev.push({ at: m.created_at, icon: '👤', titre: 'Dépôt ' + (cli ? cli.nom : 'client'), sous: `${m.poids_g}g · ${Math.round((m.poids_g || 0) * (m.cours_applique || 0)).toLocaleString('fr-MA')} MAD` });
+  });
+  BijoutierStore.getAll('caisseSnapshots').forEach(s => ev.push({ at: s.created_at, icon: '💰', titre: 'Snapshot caisse', sous: `${s.type_transaction} · ${s.poids_g}g · ${Math.round(s.montant_mad || 0).toLocaleString('fr-MA')} MAD` }));
+  BijoutierStore.getAll('raffinages').forEach(r => ev.push({ at: r.created_at, icon: '🔁', titre: 'Raffinage', sous: `${r.quantite_24k_g}g 24K → ${(r.quantite_resultat_g || 0).toFixed(1)}g ${r.purete_cible || '18K'}` }));
+  BijoutierStore.getAll('commandes').forEach(c => {
+    const cli = ClientService.getById(c.client_id);
+    ev.push({ at: c.created_at, icon: '💍', titre: 'Commande ' + (c.type || ''), sous: (cli ? cli.nom : '') + ` · ${c.poids_or_g}g` });
+  });
+
+  const heure = at => at ? new Date(at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+  const top = ev.filter(e => e.at).sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 6);
+  cont.innerHTML = top.length ? top.map((e, i) => `
+    <div class="depot-row" style="font-size:12px;${i === top.length - 1 ? 'border:none;' : ''}">
+      <span style="font-size:16px;">${e.icon}</span>
+      <div style="flex:1;margin-left:8px;"><span style="color:var(--text);font-weight:500;">${e.titre}</span><br><span class="text-muted">${e.sous}</span></div>
+      <span class="text-muted">${heure(e.at)}</span>
+    </div>`).join('') : '<p class="text-muted">Aucune activité récente</p>';
+}
+
 function renderDashboardCA() {
   const totalEl = document.getElementById('dash-ca-total');
   const moisEl = document.getElementById('dash-ca-mois');
