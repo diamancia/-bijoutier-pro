@@ -289,11 +289,13 @@ body {
 }
 .dark .filter-tab.active { box-shadow: inset 2px 2px 5px #0a0908, inset -2px -2px 5px #2e2b24; }
 
-.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin: 10px 0; }
+.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 120px; margin: 10px 0; }
 .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
 .bar-gold { background: var(--gold); border-radius: 3px 3px 0 0; width: 100%; transition: height 0.4s; }
 .bar-pur { background: #8B6914; border-radius: 3px 3px 0 0; width: 60%; transition: height 0.4s; }
-.bar-lbl { font-size: 9px; color: var(--text-muted); }
+.bar-lbl { font-size: 9px; color: var(--text-muted); text-align: center; line-height: 1.2; }
+.bar-topval { font-size: 10px; color: var(--text); font-weight: 600; }
+.bar-pct { font-size: 9px; color: var(--text-muted); }
 
 .client-row {
   display: flex; align-items: center; gap: 10px;
@@ -761,13 +763,6 @@ body {
 
     <!-- TAB BASE -->
     <div class="tab-content" id="tab-base">
-      <div class="sub-tabs">
-        <button class="sub-tab active" onclick="switchSubTab('clients', this)">Clients</button>
-        <button class="sub-tab" onclick="switchSubTab('commandes', this)">Commandes</button>
-        <button class="sub-tab" onclick="switchSubTab('articles', this)">Articles</button>
-        <button class="sub-tab" onclick="switchSubTab('galerie', this)">Galerie</button>
-      </div>
-
       <div id="sub-clients">
         <div id="client-list-view">
           <div class="search-bar nm-inset" style="padding:8px 12px;">
@@ -777,6 +772,10 @@ body {
           <div id="clients-list"></div>
           <div style="margin-top:10px;">
             <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="showAddClient()">+ Nouveau client</button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px;">
+            <button class="nm-btn nm-btn-green nm-btn-lg" style="flex:1;" onclick="showCamembert()"><span class="btn-ico">📊</span>Part clients</button>
+            <button class="nm-btn nm-btn-lg" style="flex:1;border:2px solid var(--olive);" onclick="showAddReparation()"><span class="btn-ico">🔧</span>Réparations</button>
           </div>
         </div>
 
@@ -865,7 +864,7 @@ body {
         </div>
 
         <div id="commande-detail-view" class="hidden">
-          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToClientDetail()">← Retour</button>
           <div class="nm-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
               <div>
@@ -977,7 +976,7 @@ body {
         </div>
 
         <div id="add-commande-view" class="hidden">
-          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToCommandesListe()">← Retour</button>
+          <button class="nm-btn" style="margin-bottom:10px;font-size:12px;" onclick="backToClientDetail()">← Retour</button>
           <div class="nm-card">
             <p class="section-title">Nouvelle commande</p>
             <div class="form-group">
@@ -1073,74 +1072,6 @@ body {
         </div>
       </div>
 
-      <div id="sub-articles" class="hidden">
-        <div class="nm-card">
-          <p class="section-title">Nouvel article</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Poids or (g)</label>
-              <input class="nm-input" placeholder="3.2" type="number">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Taille</label>
-              <input class="nm-input" placeholder="52">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Type de pierres</label>
-            <select class="nm-select">
-              <option>Diamant naturel</option>
-              <option>Zircone</option>
-              <option>Moissanite</option>
-              <option>Synthétiques</option>
-              <option>Naturelles</option>
-              <option>Sans pierres</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Photo</label>
-            <button class="nm-btn" style="width:100%;padding:10px;font-size:12px;">📷 Prendre une photo</button>
-          </div>
-          <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;margin-top:4px;">Ajouter au catalogue</button>
-        </div>
-        <p class="section-title" style="margin-top:4px;">Catalogue</p>
-        <div class="nm-card" style="padding:10px 12px;">
-          <div class="depot-row" style="font-size:13px;">
-            <div><strong>Bague solitaire</strong><br><span class="text-muted">Diamant · 3.2g · T52</span></div>
-            <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">3.2g</span><br><span class="text-muted">0.3ct</span></div>
-          </div>
-          <div class="depot-row" style="font-size:13px;">
-            <div><strong>Collier 18K</strong><br><span class="text-muted">Zircone · 5.8g · 45cm</span></div>
-            <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">5.8g</span><br><span class="text-muted">Multi</span></div>
-          </div>
-          <div class="depot-row" style="font-size:13px;border:none;">
-            <div><strong>Bracelet jonc</strong><br><span class="text-muted">Sans pierres · 12.5g · 18cm</span></div>
-            <div style="text-align:right;"><span style="color:var(--gold);font-weight:600;">12.5g</span><br><span class="text-muted">—</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="sub-galerie" class="hidden">
-        <div class="gallery-grid">
-          <div class="gallery-item">
-            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#2c2820,#4a3820);">💍</div>
-            <div class="gallery-overlay"><div class="gallery-tag">Diamant</div><div class="gallery-weight">3.2g · T52</div></div>
-          </div>
-          <div class="gallery-item">
-            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#1a1713,#3a2a10);">📿</div>
-            <div class="gallery-overlay"><div class="gallery-tag">Zircone</div><div class="gallery-weight">5.8g · 45cm</div></div>
-          </div>
-          <div class="gallery-item">
-            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#2c2010,#4a3510);">⭕</div>
-            <div class="gallery-overlay"><div class="gallery-tag">Sans pierres</div><div class="gallery-weight">12.5g · 18cm</div></div>
-          </div>
-          <div class="gallery-item">
-            <div class="gallery-img-placeholder" style="background:linear-gradient(135deg,#1a1820,#2c1a3a);">💎</div>
-            <div class="gallery-overlay"><div class="gallery-tag">Moissanite</div><div class="gallery-weight">4.1g · T56</div></div>
-          </div>
-        </div>
-        <button class="nm-btn" style="width:100%;margin-top:12px;padding:10px;font-size:12px;">📷 Ajouter une commande</button>
-      </div>
     </div>
 
     <!-- TAB METIER -->
@@ -1156,59 +1087,82 @@ body {
 
       <!-- Balayures -->
       <div id="met-balayures">
-        <div class="filter-tabs">
-          <button class="filter-tab active" id="bal-tab-incin" onclick="selectBalayureType('Incinération', this)">Incinération</button>
-          <button class="filter-tab" id="bal-tab-fonte" onclick="selectBalayureType('Fonte', this)">Fonte</button>
-        </div>
-        <div class="nm-card">
-          <p class="section-title">Saisie traitement</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Poids initial (g)</label>
-              <input class="nm-input" id="bal-initial" type="number" placeholder="100" oninput="calcBalayures()">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Après traitement (g)</label>
-              <input class="nm-input" id="bal-traite" type="number" placeholder="12.5" oninput="calcBalayures()">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Affinage or pur 24K (g)</label>
-            <input class="nm-input" id="bal-pur" type="number" placeholder="8.2" oninput="calcBalayures()">
-          </div>
-          <div class="nm-inset" style="margin-top:8px;">
+        <div class="nm-card" id="bal-saisie-card">
+          <p class="section-title" style="cursor:pointer;" onclick="toggleBalSaisie()">Saisie traitement <span id="bal-saisie-chevron" style="float:right;color:var(--text-muted);">▾</span></p>
+
+          <!-- Synthèse repliée (dernière balayure enregistrée) -->
+          <div id="bal-synthese" class="nm-inset hidden" style="cursor:pointer;margin-top:4px;" onclick="toggleBalSaisie()">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div>
-                <div class="form-label">Valeur 24K récupérée</div>
-                <div class="stat-val" id="bal-valeur-g">— g</div>
+                <div class="form-label" style="margin-bottom:2px;">Dernière · <span id="bal-syn-date">—</span></div>
+                <div style="font-size:13px;color:var(--text);"><span id="bal-syn-flux">—</span></div>
               </div>
               <div style="text-align:right;">
-                <div class="form-label">≡ MAD (cours actif)</div>
-                <div class="stat-val" id="bal-valeur-mad">— MAD</div>
+                <div class="stat-val" id="bal-syn-pur" style="color:var(--gold);">—</div>
+                <div class="form-label" style="margin-bottom:0;">GAIN BRUT</div>
               </div>
             </div>
           </div>
+
+          <!-- Formulaire (déplié) -->
+          <div id="bal-saisie-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Poids initial (g)</label>
+                <input class="nm-input" id="bal-initial" type="number" placeholder="100" oninput="calcBalayures()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Après traitement (g)</label>
+                <input class="nm-input" id="bal-traite" type="number" placeholder="12.5" oninput="calcBalayures()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Affinage or pur 24K (g)</label>
+              <input class="nm-input" id="bal-pur" type="number" placeholder="8.2" oninput="calcBalayures()">
+            </div>
+            <div class="nm-inset" style="margin-top:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div class="form-label">Or pur 24K (GAIN BRUT)</div>
+                  <div class="stat-val" id="bal-valeur-g">— g</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="form-label">≡ MAD (cours actif)</div>
+                  <div class="stat-val" id="bal-valeur-mad">— MAD</div>
+                </div>
+              </div>
+              <div class="form-label" style="margin:6px 0 0;font-style:italic;">Gain brut avant déduction des charges</div>
+            </div>
+          </div>
         </div>
+
         <div class="nm-card">
-          <p class="section-title">Comparatif (g)</p>
+          <p class="section-title">Comparatif (g) <span style="float:right;color:var(--gold);font-size:10px;letter-spacing:.5px;">■ 24K = GAIN BRUT</span></p>
           <div class="chart-bars">
             <div class="chart-bar-wrap">
+              <div class="bar-topval" id="bal-bv-initial">— g</div>
               <div class="bar-gold" id="bar-initial" style="height:60px;"></div>
               <div class="bar-lbl">Initial</div>
+              <div class="bar-pct" id="bal-pct-initial">100%</div>
             </div>
             <div class="chart-bar-wrap">
+              <div class="bar-topval" id="bal-bv-traite">— g</div>
               <div class="bar-gold" id="bar-traite" style="height:12px;opacity:0.7;"></div>
               <div class="bar-lbl">Traité</div>
+              <div class="bar-pct" id="bal-pct-traite">—</div>
             </div>
             <div class="chart-bar-wrap">
+              <div class="bar-topval" id="bal-bv-pur" style="color:var(--gold);">— g</div>
               <div class="bar-pur" id="bar-pur-bar" style="height:8px;"></div>
-              <div class="bar-lbl">24K pur</div>
+              <div class="bar-lbl">24K pur<br><span style="color:var(--gold);">GAIN BRUT</span></div>
+              <div class="bar-pct" id="bal-pct-pur" style="color:var(--gold);font-weight:600;">—</div>
             </div>
           </div>
           <button class="nm-btn nm-btn-gold nm-btn-lg" style="width:100%;" onclick="saveBalayures()"><span class="btn-ico">♻️</span>Enregistrer</button>
         </div>
+
         <div class="nm-card">
-          <p class="section-title"><span id="bal-list-titre">Balayures Incinération</span> <span id="bal-list-total" style="float:right;color:var(--gold);"></span></p>
+          <p class="section-title">Historique balayures <span id="bal-list-total" style="float:right;color:var(--gold);"></span></p>
           <div id="balayures-list"></div>
         </div>
       </div>
@@ -1446,19 +1400,8 @@ body {
           <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="saveCaisseSnap()">📸 Enregistrer snapshot</button>
         </div>
         <div class="nm-card">
-          <p class="section-title">Snapshots du jour</p>
-          <div id="caisse-snaps">
-            <div class="caisse-snap">
-              <div><div class="snap-time">09:15</div><div class="snap-type">Achat or · 3.5g</div></div>
-              <div class="snap-val">642 MAD/g</div>
-              <div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:var(--text);">2 247 MAD</div></div>
-            </div>
-            <div class="caisse-snap">
-              <div><div class="snap-time">11:42</div><div class="snap-type">Vente bijou · 5.2g</div></div>
-              <div class="snap-val">642 MAD/g</div>
-              <div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:var(--text);">3 338 MAD</div></div>
-            </div>
-          </div>
+          <p class="section-title">Snapshots du jour <span id="caisse-jour-total" style="float:right;color:var(--gold);"></span></p>
+          <div id="caisse-snaps"></div>
         </div>
       </div>
 
@@ -1635,19 +1578,13 @@ function switchTab(tab) {
   navEl.appendChild(pill);
   if (tab === 'metier') {
     const activeSub = document.querySelector('#tab-metier .sub-tabs .sub-tab.active');
-    if (activeSub && /Balayures/.test(activeSub.textContent)) renderBalayures();
+    if (activeSub && /Balayures/.test(activeSub.textContent)) initBalayures();
   }
-}
-
-function switchSubTab(tab, btn) {
-  ['clients','commandes','articles','galerie'].forEach(t => {
-    const el = document.getElementById('sub-' + t);
-    if (el) el.classList.toggle('hidden', t !== tab);
-  });
-  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (tab === 'clients') backToClients();
-  if (tab === 'commandes') backToCommandesListe();
+  if (tab === 'base') {
+    // Toujours revenir au hub Clients (liste), même si on était dans une vue commande
+    exitCommandeView();
+    backToClients();
+  }
 }
 
 function switchMetierTab(tab, btn) {
@@ -1661,8 +1598,19 @@ function switchMetierTab(tab, btn) {
   if (tab === 'tresor') renderTresor();
   if (tab === 'cours') initCoursModule();
   if (tab === 'caisse') renderCaisse();
-  if (tab === 'balayures') renderBalayures();
+  if (tab === 'balayures') initBalayures();
   if (tab === 'raffinage') renderRaffinage();
+}
+
+// Entrée module Balayures : liste + synthèse, et saisie repliée si historique présent
+function initBalayures() {
+  renderBalayures();
+  if (BalayureService.getHistorique().length) {
+    renderBalSynthese();
+    toggleBalSaisie('collapse');
+  } else {
+    toggleBalSaisie('expand');
+  }
 }
 
 function renderCaisse() {
@@ -1672,6 +1620,28 @@ function renderCaisse() {
   document.getElementById('caisse-achats-tiers').textContent = s.achats_tiers_g.toFixed(1) + 'g';
   const disp = document.getElementById('caisse-cours-display');
   if (disp) disp.textContent = Math.round(CoursService.getCours());
+  renderCaisseSnaps();
+}
+
+// Sens caisse (MAD) : ce qui entre vs ce qui sort du tiroir-caisse
+const CAISSE_SENS = { 'Achat or': 'sortie', 'Raffinage': 'sortie', 'Vente bijou': 'entree', 'Dépôt client': 'entree' };
+
+function renderCaisseSnaps() {
+  const cont = document.getElementById('caisse-snaps');
+  if (!cont) return;
+  const snaps = CaisseService.getSnapsDuJour().slice().reverse(); // plus récent en haut
+  cont.innerHTML = snaps.length ? snaps.map(s => {
+    const entree = s.sens !== 'sortie';
+    const signe = entree ? '+' : '−';
+    const col = entree ? 'var(--success)' : 'var(--danger)';
+    return `<div class="caisse-snap">
+      <div><div class="snap-time">${s.heure}</div><div class="snap-type">${s.type_transaction} · ${s.poids_g}g</div></div>
+      <div class="snap-val">${s.cours_applique} MAD/g</div>
+      <div style="text-align:right;"><div style="font-size:13px;font-weight:600;color:${col};">${signe}${(s.montant_mad || 0).toLocaleString('fr-MA', {maximumFractionDigits:0})} MAD</div></div>
+    </div>`;
+  }).join('') : '<p class="text-muted">Aucun mouvement aujourd\'hui</p>';
+  const net = CaisseService.getSoldeJour();
+  document.getElementById('caisse-jour-total').textContent = (net >= 0 ? '+' : '') + net.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD';
 }
 
 function switchFilter(btn) {
@@ -1681,27 +1651,58 @@ function switchFilter(btn) {
 
 function toggleSwitch(btn) { btn.classList.toggle('on'); }
 
+// Remplit le graphe comparatif (barres en g + proportions % du poids initial)
+function fillBalGraph(initial, traite, pur) {
+  const maxH = 70;
+  const max = Math.max(initial, 1);
+  document.getElementById('bar-initial').style.height = Math.max(4, (initial / max) * maxH) + 'px';
+  document.getElementById('bar-traite').style.height = Math.max(2, (traite / max) * maxH) + 'px';
+  document.getElementById('bar-pur-bar').style.height = Math.max(2, (pur / max) * maxH) + 'px';
+
+  document.getElementById('bal-bv-initial').textContent = initial > 0 ? initial.toFixed(1) + ' g' : '— g';
+  document.getElementById('bal-bv-traite').textContent = traite > 0 ? traite.toFixed(1) + ' g' : '— g';
+  document.getElementById('bal-bv-pur').textContent = pur > 0 ? pur.toFixed(2) + ' g' : '— g';
+  document.getElementById('bal-pct-initial').textContent = initial > 0 ? '100%' : '—';
+  document.getElementById('bal-pct-traite').textContent = initial > 0 ? ((traite / initial) * 100).toFixed(1) + '%' : '—';
+  document.getElementById('bal-pct-pur').textContent = initial > 0 ? ((pur / initial) * 100).toFixed(1) + '%' : '—';
+}
+
 function calcBalayures() {
   const pur = parseFloat(document.getElementById('bal-pur').value) || 0;
   const initial = parseFloat(document.getElementById('bal-initial').value) || 0;
   const traite = parseFloat(document.getElementById('bal-traite').value) || 0;
   document.getElementById('bal-valeur-g').textContent = pur > 0 ? pur.toFixed(2) + 'g' : '— g';
   document.getElementById('bal-valeur-mad').textContent = pur > 0 ? (pur * COURS_ACTIF).toLocaleString('fr-MA') + ' MAD' : '— MAD';
-  const maxH = 70;
-  const max = Math.max(initial, 1);
-  document.getElementById('bar-initial').style.height = Math.max(4, (initial / max) * maxH) + 'px';
-  document.getElementById('bar-traite').style.height = Math.max(2, (traite / max) * maxH) + 'px';
-  document.getElementById('bar-pur-bar').style.height = Math.max(2, (pur / max) * maxH) + 'px';
+  fillBalGraph(initial, traite, pur);
 }
 
-let BAL_TYPE = 'Incinération';
+// Graphe basé sur la dernière balayure enregistrée (quand la saisie est repliée)
+function fillBalGraphFromLast() {
+  const last = BalayureService.getHistorique()[0];
+  if (last) fillBalGraph(last.poids_initial_g || 0, last.poids_traite_g || 0, last.poids_pur_24k_g || 0);
+}
 
-function selectBalayureType(type, btn) {
-  BAL_TYPE = type;
-  btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('bal-list-titre').textContent = 'Balayures ' + type;
-  renderBalayures();
+// Replie/déplie la carte de saisie : formulaire <-> synthèse de la dernière balayure
+function toggleBalSaisie(force) {
+  const form = document.getElementById('bal-saisie-form');
+  const synth = document.getElementById('bal-synthese');
+  const chevron = document.getElementById('bal-saisie-chevron');
+  const collapse = force === 'collapse' ? true : (force === 'expand' ? false : !form.classList.contains('hidden'));
+  // On ne replie que s'il existe au moins une balayure à synthétiser
+  if (collapse && !BalayureService.getHistorique().length) return;
+  form.classList.toggle('hidden', collapse);
+  synth.classList.toggle('hidden', !collapse);
+  chevron.textContent = collapse ? '▸' : '▾';
+  // Le graphe suit l'état : dernière balayure si replié, saisie en cours si déplié
+  if (collapse) fillBalGraphFromLast(); else calcBalayures();
+}
+
+function renderBalSynthese() {
+  const last = BalayureService.getHistorique()[0];
+  if (!last) return;
+  document.getElementById('bal-syn-date').textContent = last.date;
+  document.getElementById('bal-syn-flux').textContent = (last.poids_initial_g || 0) + 'g → ' + last.poids_pur_24k_g + 'g · ' + (last.valeur_mad || 0).toLocaleString('fr-MA') + ' MAD';
+  document.getElementById('bal-syn-pur').textContent = last.poids_pur_24k_g + ' g';
 }
 
 function saveBalayures() {
@@ -1711,7 +1712,7 @@ function saveBalayures() {
   if (pur <= 0) { alert('Veuillez saisir l\'or pur 24K récupéré'); return; }
 
   BalayureService.enregistrer({
-    type: BAL_TYPE,
+    type: 'Incinération',
     poids_initial_g: initial,
     poids_traite_g: traite,
     poids_pur_24k_g: pur,
@@ -1720,24 +1721,24 @@ function saveBalayures() {
   document.getElementById('bal-initial').value = '';
   document.getElementById('bal-traite').value = '';
   document.getElementById('bal-pur').value = '';
-  calcBalayures();
   renderBalayures();
-  alert('✅ Balayure ' + BAL_TYPE + ' enregistrée : ' + pur + 'g 24K → ' + (pur * CoursService.getCours()).toLocaleString('fr-MA') + ' MAD (ajouté au stock propre)');
+  renderBalSynthese();
+  toggleBalSaisie('collapse');  // réduit la saisie à sa synthèse (+ graphe = dernière balayure)
 }
 
 function renderBalayures() {
-  const list = BalayureService.getHistorique().filter(b => b.type === BAL_TYPE);
+  const list = BalayureService.getHistorique();
   const cont = document.getElementById('balayures-list');
   if (!cont) return;
   const total = list.reduce((s, b) => s + (b.poids_pur_24k_g || 0), 0);
-  document.getElementById('bal-list-total').textContent = total > 0 ? total.toFixed(1) + 'g 24K' : '';
+  document.getElementById('bal-list-total').textContent = total > 0 ? total.toFixed(1) + 'g 24K (gain brut)' : '';
   cont.innerHTML = list.length ? list.map(b => {
     const rdt = b.poids_initial_g > 0 ? ((b.poids_pur_24k_g / b.poids_initial_g) * 100).toFixed(1) : '—';
     return `<div class="cours-entry">
-      <div><div class="cours-date">${b.date}</div><div class="cours-qty">${b.poids_initial_g || 0}g → ${b.poids_pur_24k_g}g · rdt ${rdt}%</div></div>
+      <div><div class="cours-date">${b.date}</div><div class="cours-qty">${b.poids_initial_g || 0}g → ${b.poids_pur_24k_g}g · gain brut ${rdt}%</div></div>
       <div class="cours-val">${(b.valeur_mad || 0).toLocaleString('fr-MA')} MAD</div>
     </div>`;
-  }).join('') : '<p class="text-muted">Aucune balayure ' + BAL_TYPE + '</p>';
+  }).join('') : '<p class="text-muted">Aucune balayure</p>';
 }
 
 function calcRaffinage() {
@@ -1959,12 +1960,16 @@ function saveCaisseSnap() {
   const g = parseFloat(document.getElementById('caisse-g').value) || 0;
   const type = document.getElementById('caisse-type').value;
   if (!g) { alert('Entrez un montant'); return; }
-  const now = new Date();
-  const h = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  const snap = document.createElement('div');
-  snap.className = 'caisse-snap';
-  snap.innerHTML = `<div><div class="snap-time">${h}</div><div class="snap-type">${type} · ${g}g</div></div><div class="snap-val">${COURS_ACTIF} MAD/g</div><div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:var(--text);">${(g * COURS_ACTIF).toLocaleString('fr-MA')} MAD</div></div>`;
-  document.getElementById('caisse-snaps').prepend(snap);
+
+  CaisseService.snapshot({
+    type_transaction: type,
+    poids_g: g,
+    sens: CAISSE_SENS[type] || 'entree',
+  });
+
+  document.getElementById('caisse-g').value = '';
+  calcCaisse();
+  renderCaisse();
 }
 
 // ─── Module Clients (renderer : lit via ClientService/StockService, n'écrit jamais directement) ───
@@ -2112,11 +2117,21 @@ function renderClientGalerie(clientId) {
   }).join('') : '<p class="text-muted" style="grid-column:1/3;text-align:center;padding:12px 0;">Aucune pièce en galerie</p>';
 }
 
+// ─── Contexte Commandes : Clients est le hub unique de la rubrique Base.
+// Les vues commande/camembert/réparation vivent dans #sub-commandes ; on bascule
+// la visibilité entre #sub-clients et #sub-commandes plutôt que via un onglet. ───
+function enterCommandeView() {
+  document.getElementById('sub-clients').classList.add('hidden');
+  document.getElementById('sub-commandes').classList.remove('hidden');
+}
+function exitCommandeView() {
+  document.getElementById('sub-commandes').classList.add('hidden');
+  document.getElementById('sub-clients').classList.remove('hidden');
+}
+
 function showAddCommandePourClient() {
   const clientId = _clientDetailId;
-  // Bascule vers le sous-onglet Commandes (où réside le formulaire)
-  const btn = Array.from(document.querySelectorAll('#tab-base .sub-tabs .sub-tab')).find(b => b.textContent.trim() === 'Commandes');
-  if (btn) switchSubTab('commandes', btn);
+  enterCommandeView();
   showAddCommande();
   if (clientId) document.getElementById('cmd-add-client').value = clientId;
 }
@@ -2160,6 +2175,7 @@ function hideAllCommandeViews() {
 
 function showCommandeDetail(id) {
   _commandeDetailId = id;
+  enterCommandeView();
   hideAllCommandeViews();
   document.getElementById('commande-detail-view').classList.remove('hidden');
 
@@ -2241,6 +2257,7 @@ let ANA_METRIC = 'grammes';// 'grammes' | 'ca'
 let ANA_CLIENTS = null;    // null = tous, sinon tableau d'ids
 
 function showCamembert() {
+  enterCommandeView();
   hideAllCommandeViews();
   document.getElementById('camembert-view').classList.remove('hidden');
   // Filtre clients (cases à cocher)
@@ -2405,10 +2422,19 @@ function renderEvolution() {
     serie.map(s => `<div class="depot-row"><div class="text-muted">${s.date}</div><div class="depot-amount">${anaUnite(s.valeur)}</div></div>`).join('');
 }
 
+// Retour vers la liste des clients (camembert / réparations, vues globales).
 function backToCommandesListe() {
   hideAllCommandeViews();
-  document.getElementById('commande-list-view').classList.remove('hidden');
-  renderCommandesListe();
+  exitCommandeView();
+  backToClients();
+}
+
+// Retour vers la fiche du client courant (détail commande / nouvelle commande).
+function backToClientDetail() {
+  hideAllCommandeViews();
+  exitCommandeView();
+  if (_clientDetailId) showClientDetail(_clientDetailId);
+  else backToClients();
 }
 
 function showAddCommande() {
@@ -2439,7 +2465,7 @@ function submitAddCommande() {
     date_depot_or: depot, date_livraison_prevue: livraison,
   });
 
-  backToCommandesListe();
+  backToClientDetail();
 }
 
 function livrerCommandeActuelle() {
@@ -2451,6 +2477,7 @@ function livrerCommandeActuelle() {
 
 // ─── Réparations (isolé) ───
 function showAddReparation() {
+  enterCommandeView();
   hideAllCommandeViews();
   document.getElementById('add-reparation-view').classList.remove('hidden');
   document.getElementById('rep-add-client').innerHTML = ClientService.getAll()
@@ -2842,9 +2869,7 @@ function applyRoleScope(role, artisanId) {
     mainApp.querySelector('.bottom-nav').classList.remove('hidden');
     document.getElementById('nav-dashboard').classList.add('hidden');
     document.getElementById('nav-admin').classList.add('hidden');
-    document.querySelectorAll('#tab-base .sub-tabs .sub-tab').forEach(btn => {
-      btn.classList.toggle('hidden', btn.textContent.trim() !== 'Clients');
-    });
+    // Base = hub Clients unique (plus de sous-onglets globaux à filtrer ici)
     document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
       btn.classList.toggle('hidden', !['Cours or', 'Atelier'].includes(btn.textContent.trim()));
     });
