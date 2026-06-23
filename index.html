@@ -1247,17 +1247,11 @@ body {
             Qté 18K = Qté 24K × 24/18<br>
             Valeur = Qté 18K × Cours actif × 0.75
           </div>
+          <button class="nm-btn nm-btn-gold nm-btn-lg" style="width:100%;margin-top:10px;" onclick="saveRaffinage()"><span class="btn-ico">⚗️</span>Enregistrer</button>
         </div>
         <div class="nm-card">
-          <p class="section-title">Historique raffinage</p>
-          <div class="depot-row">
-            <div><span class="text-muted">18/06</span> · 10g 24K → 13.3g 18K</div>
-            <span class="chip chip-gold">6 420 MAD</span>
-          </div>
-          <div class="depot-row" style="border:none;">
-            <div><span class="text-muted">12/06</span> · 5g 24K → 6.7g 18K</div>
-            <span class="chip chip-gold">3 195 MAD</span>
-          </div>
+          <p class="section-title">Historique raffinage <span id="raf-list-total" style="float:right;color:var(--gold);"></span></p>
+          <div id="raffinage-list"></div>
         </div>
       </div>
 
@@ -1668,6 +1662,7 @@ function switchMetierTab(tab, btn) {
   if (tab === 'cours') initCoursModule();
   if (tab === 'caisse') renderCaisse();
   if (tab === 'balayures') renderBalayures();
+  if (tab === 'raffinage') renderRaffinage();
 }
 
 function renderCaisse() {
@@ -1747,10 +1742,37 @@ function renderBalayures() {
 
 function calcRaffinage() {
   const q24 = parseFloat(document.getElementById('raf-24k').value) || 0;
-  const q18 = q24 * 24 / 18;
-  const mad = q18 * COURS_ACTIF * 0.75;
-  document.getElementById('raf-result-g').textContent = q24 > 0 ? q18.toFixed(2) + 'g' : '—';
-  document.getElementById('raf-result-mad').textContent = q24 > 0 ? mad.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD' : '—';
+  if (q24 <= 0) {
+    document.getElementById('raf-result-g').textContent = '—';
+    document.getElementById('raf-result-mad').textContent = '—';
+    return;
+  }
+  const c = RaffinageService.convertir(q24, '18K');
+  document.getElementById('raf-result-g').textContent = c.quantite_resultat_g.toFixed(2) + 'g';
+  document.getElementById('raf-result-mad').textContent = c.valeur_mad.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD';
+}
+
+function saveRaffinage() {
+  const q24 = parseFloat(document.getElementById('raf-24k').value) || 0;
+  if (q24 <= 0) { alert('Veuillez saisir la quantité or 24K'); return; }
+  const r = RaffinageService.enregistrer({ quantite_24k_g: q24, purete_cible: '18K' });
+  document.getElementById('raf-24k').value = '';
+  calcRaffinage();
+  renderRaffinage();
+  alert('✅ Raffinage enregistré : ' + q24 + 'g 24K → ' + r.quantite_resultat_g.toFixed(2) + 'g 18K (' + r.valeur_mad.toLocaleString('fr-MA', {maximumFractionDigits:0}) + ' MAD)');
+}
+
+function renderRaffinage() {
+  const list = RaffinageService.getHistorique();
+  const cont = document.getElementById('raffinage-list');
+  if (!cont) return;
+  const total = list.reduce((s, r) => s + (r.quantite_resultat_g || 0), 0);
+  document.getElementById('raf-list-total').textContent = total > 0 ? total.toFixed(1) + 'g 18K' : '';
+  cont.innerHTML = list.length ? list.map(r => `
+    <div class="depot-row">
+      <div><span class="text-muted">${r.date}</span> · ${r.quantite_24k_g}g 24K → ${(r.quantite_resultat_g || 0).toFixed(1)}g ${r.purete_cible || '18K'}</div>
+      <span class="chip chip-gold">${(r.valeur_mad || 0).toLocaleString('fr-MA', {maximumFractionDigits:0})} MAD</span>
+    </div>`).join('') : '<p class="text-muted">Aucun raffinage</p>';
 }
 
 // ─── Module Cours or (renderer : lit/écrit via CoursService/CAService/AchatDiversService) ───
