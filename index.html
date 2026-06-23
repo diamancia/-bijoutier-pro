@@ -1194,12 +1194,14 @@ body {
 
     </div>
 
+    <!-- TAB COURS OR (catégorie à part : la matière première qui impacte toute la journée) -->
+    <div class="tab-content" id="tab-cours"></div>
+
     <!-- TAB METIER -->
     <div class="tab-content" id="tab-metier">
       <div class="sub-tabs">
         <button class="sub-tab active" onclick="switchMetierTab('balayures', this)"><span class="metal-dot"></span>♻️ Balayures</button>
         <button class="sub-tab" onclick="switchMetierTab('raffinage', this)"><span class="metal-dot"></span>⚗️ Raffinage</button>
-        <button class="sub-tab" onclick="switchMetierTab('cours', this)">📈 Cours or</button>
         <button class="sub-tab" onclick="switchMetierTab('caisse', this)">💰 Caisse</button>
         <button class="sub-tab" onclick="switchMetierTab('atelier', this)">🏭 Atelier</button>
         <button class="sub-tab" onclick="switchMetierTab('artisans', this)">👷 Artisans</button>
@@ -1743,6 +1745,10 @@ body {
       <span class="nav-icon">🗂️</span>
       <span class="nav-label">Base</span>
     </button>
+    <button class="nav-item" id="nav-cours" onclick="switchTab('cours')">
+      <span class="nav-icon">🪙</span>
+      <span class="nav-label">Cours or</span>
+    </button>
     <button class="nav-item" id="nav-metier" onclick="switchTab('metier')">
       <span class="nav-icon">⚖️</span>
       <span class="nav-label">Métier</span>
@@ -1864,10 +1870,18 @@ function switchTab(tab) {
     backToClients();
   }
   if (tab === 'dashboard') renderDashboard();
+  if (tab === 'cours') {
+    // Cours or est une catégorie de 1er niveau : on rapatrie son module hors de Métier
+    const mod = document.getElementById('met-cours');
+    const host = document.getElementById('tab-cours');
+    if (mod && mod.parentElement !== host) host.appendChild(mod);
+    if (mod) mod.classList.remove('hidden');
+    initCoursModule();
+  }
 }
 
 function switchMetierTab(tab, btn) {
-  ['balayures','raffinage','cours','caisse','atelier','artisans','tresor'].forEach(t => {
+  ['balayures','raffinage','caisse','atelier','artisans','tresor'].forEach(t => {
     const el = document.getElementById('met-' + t);
     if (el) el.classList.toggle('hidden', t !== tab);
   });
@@ -1875,7 +1889,6 @@ function switchMetierTab(tab, btn) {
   btn.classList.add('active');
   if (tab === 'atelier') backToAtelierListe();
   if (tab === 'tresor') renderTresor();
-  if (tab === 'cours') initCoursModule();
   if (tab === 'caisse') renderCaisse();
   if (tab === 'balayures') initBalayures();
   if (tab === 'raffinage') renderRaffinage();
@@ -3540,8 +3553,9 @@ function applyRoleScope(role, artisanId) {
     mainApp.querySelector('.app-header').classList.remove('hidden');
     document.getElementById('nav-dashboard').classList.add('hidden');
     document.getElementById('nav-admin').classList.add('hidden');
-    // Scope Métier du chef (utilisé en mode ATELIER)
-    const chefMetier = ['Cours or', 'Atelier', 'Artisans', 'Coffre'];
+    // Scope Métier du chef (utilisé en mode ATELIER) — Cours or est désormais une
+    // catégorie de 1er niveau (nav), plus un sous-onglet Métier.
+    const chefMetier = ['Atelier', 'Artisans', 'Coffre'];
     document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
       btn.classList.toggle('hidden', !chefMetier.some(k => btn.textContent.includes(k)));
     });
