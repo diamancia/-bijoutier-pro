@@ -154,26 +154,26 @@ body {
 }
 
 .section-title {
-  font-size: 11px; font-weight: 600;
+  font-size: 13px; font-weight: 700;
   color: var(--gold);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   margin-bottom: 10px;
 }
 
 .card-title {
-  font-size: 14px; font-weight: 600;
+  font-size: 17px; font-weight: 700;
   color: var(--text);
   margin-bottom: 8px;
 }
 
-.text-muted { font-size: 12px; color: var(--text-muted); }
+.text-muted { font-size: 13px; color: var(--text-muted); }
 
 .nm-btn {
   background: var(--nm-bg);
   border: none; border-radius: 10px;
-  padding: 8px 16px;
-  font-size: 13px; font-weight: 500;
+  padding: 10px 18px;
+  font-size: 14px; font-weight: 600;
   cursor: pointer;
   box-shadow: 3px 3px 7px rgba(0,0,0,0.1), -3px -3px 7px rgba(255,255,255,0.7);
   color: var(--text);
@@ -262,8 +262,8 @@ body {
   width: 100%;
   background: var(--nm-bg);
   border: none; border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px; color: var(--text);
+  padding: 11px 12px;
+  font-size: 15px; color: var(--text);
   box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
   outline: none;
   font-family: inherit;
@@ -277,8 +277,8 @@ body {
   width: 100%;
   background: var(--nm-bg);
   border: none; border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px; color: var(--text);
+  padding: 11px 12px;
+  font-size: 15px; color: var(--text);
   box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
   outline: none; appearance: none;
   font-family: inherit;
@@ -298,27 +298,27 @@ body {
 }
 .dark .stat-box { box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24; }
 
-.stat-val { font-size: 18px; font-weight: 600; color: var(--gold); }
-.stat-lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.stat-val { font-size: 21px; font-weight: 700; color: var(--gold); }
+.stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .form-group { margin-bottom: 8px; }
-.form-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: block; }
+.form-label { font-size: 13px; color: var(--text-muted); margin-bottom: 5px; display: block; }
 
 .filter-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
 
 .filter-tab {
   flex: 1; text-align: center;
-  padding: 6px 0; font-size: 11px; font-weight: 500;
-  border-radius: 8px; cursor: pointer;
-  background: var(--nm-bg); color: var(--text-muted);
+  padding: 9px 0; font-size: 13px; font-weight: 600;
+  border-radius: 10px; cursor: pointer;
+  background: var(--nm-bg); color: var(--text);
   box-shadow: 3px 3px 6px rgba(0,0,0,0.1), -3px -3px 6px rgba(255,255,255,0.7);
   border: none; font-family: inherit; transition: all 0.2s;
 }
-.dark .filter-tab { color: #9a9080; box-shadow: 3px 3px 6px #0a0908, -3px -3px 6px #2e2b24; }
+.dark .filter-tab { color: #cfc8bb; box-shadow: 3px 3px 6px #0a0908, -3px -3px 6px #2e2b24; }
 .filter-tab.active {
-  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.7);
-  color: var(--gold);
+  background: var(--gold); color: #1a1713; font-weight: 800;
+  box-shadow: inset 2px 2px 5px #8B6914, inset -2px -2px 5px #E8C96A;
 }
 .dark .filter-tab.active { box-shadow: inset 2px 2px 5px #0a0908, inset -2px -2px 5px #2e2b24; }
 
@@ -349,9 +349,9 @@ body {
 .dark .client-avatar { box-shadow: 2px 2px 5px #0a0908, -2px -2px 5px #2e2b24; }
 
 .client-info { flex: 1; }
-.client-name { font-size: 13px; font-weight: 500; color: var(--text); }
-.client-meta { font-size: 11px; color: var(--text-muted); }
-.client-badge { font-size: 10px; background: rgba(201,168,76,0.15); color: var(--gold-dark); border-radius: 6px; padding: 2px 7px; font-weight: 500; }
+.client-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.client-meta { font-size: 12px; color: var(--text-muted); }
+.client-badge { font-size: 11px; background: rgba(201,168,76,0.15); color: var(--gold-dark); border-radius: 6px; padding: 3px 8px; font-weight: 600; }
 
 .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .gallery-item {
@@ -379,9 +379,9 @@ body {
 
 .depot-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(0,0,0,0.05);
-  font-size: 12px;
+  font-size: 14px;
 }
 .dark .depot-row { border-bottom-color: rgba(255,255,255,0.05); }
 
@@ -389,7 +389,7 @@ body {
 .depot-amount { font-weight: 500; color: var(--text); }
 .depot-mad { color: var(--gold); font-weight: 600; }
 
-.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .chip-gold { background: rgba(201,168,76,0.15); color: var(--gold-dark); }
 .chip-green { background: rgba(26,122,74,0.12); color: var(--success); }
 .chip-red { background: rgba(192,57,43,0.12); color: var(--danger); }
@@ -461,30 +461,32 @@ body {
   border: none; background: transparent;
   gap: 3px; font-family: inherit; transition: all 0.2s;
 }
-.nav-icon { font-size: 22px; line-height: 1; }
-.nav-label { font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.2s; }
+.nav-icon { font-size: 26px; line-height: 1; }
+.nav-label { font-size: 12px; font-weight: 600; color: var(--text-muted); transition: color 0.2s; }
 .nav-item.active .nav-label { color: var(--gold); }
 .nav-pill { width: 4px; height: 4px; border-radius: 2px; background: var(--gold); margin-top: 2px; }
 
 .sub-tabs {
-  display: flex; gap: 6px; margin-bottom: 12px;
-  overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+  display: flex; gap: 8px; margin-bottom: 14px;
+  overflow-x: auto; scrollbar-width: none; padding-bottom: 4px;
 }
 .sub-tabs::-webkit-scrollbar { display: none; }
 
 .sub-tab {
-  padding: 6px 14px; border-radius: 20px;
-  font-size: 12px; font-weight: 500;
+  padding: 10px 18px; border-radius: 22px;
+  font-size: 15px; font-weight: 600;
   cursor: pointer; white-space: nowrap;
-  border: none; font-family: inherit;
-  background: var(--nm-bg); color: var(--text-muted);
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -2px -2px 5px rgba(255,255,255,0.7);
+  border: 2px solid transparent; font-family: inherit;
+  background: var(--nm-bg); color: var(--text);
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.12), -3px -3px 7px rgba(255,255,255,0.7);
   transition: all 0.2s;
 }
-.dark .sub-tab { color: #9a9080; box-shadow: 2px 2px 5px #0a0908, -2px -2px 5px #2e2b24; }
+.dark .sub-tab { color: #cfc8bb; box-shadow: 3px 3px 7px #0a0908, -3px -3px 7px #2e2b24; }
 .sub-tab.active {
-  background: var(--gold); color: #1a1713;
-  box-shadow: 2px 2px 5px #8B6914, -2px -2px 5px #E8C96A;
+  background: var(--gold); color: #1a1713; font-weight: 800;
+  border-color: #8B6914;
+  box-shadow: 3px 3px 8px #8B6914, -3px -3px 8px #E8C96A;
+  transform: translateY(-1px);
 }
 
 .cours-entry {
@@ -883,11 +885,11 @@ body {
           </div>
           <!-- Sous-onglets de la fiche client -->
           <div class="sub-tabs">
-            <button class="sub-tab active" id="cli-tab-commandes" onclick="switchClientTab('commandes', this)">Commandes</button>
-            <button class="sub-tab" id="cli-tab-oujra" onclick="switchClientTab('oujra', this)">Oujra</button>
-            <button class="sub-tab" id="cli-tab-articles" onclick="switchClientTab('articles', this)">Articles</button>
-            <button class="sub-tab" id="cli-tab-galerie" onclick="switchClientTab('galerie', this)">Galerie</button>
-            <button class="sub-tab" id="cli-tab-depots" onclick="switchClientTab('depots', this)">Dépôts</button>
+            <button class="sub-tab active" id="cli-tab-commandes" onclick="switchClientTab('commandes', this)">💍 Commandes</button>
+            <button class="sub-tab" id="cli-tab-oujra" onclick="switchClientTab('oujra', this)">💰 Oujra</button>
+            <button class="sub-tab" id="cli-tab-articles" onclick="switchClientTab('articles', this)">📿 Articles</button>
+            <button class="sub-tab" id="cli-tab-galerie" onclick="switchClientTab('galerie', this)">🖼️ Galerie</button>
+            <button class="sub-tab" id="cli-tab-depots" onclick="switchClientTab('depots', this)">📥 Dépôts</button>
           </div>
 
           <div id="cli-pane-commandes">
@@ -1195,11 +1197,11 @@ body {
     <!-- TAB METIER -->
     <div class="tab-content" id="tab-metier">
       <div class="sub-tabs">
-        <button class="sub-tab active" onclick="switchMetierTab('balayures', this)"><span class="metal-dot"></span>Balayures</button>
-        <button class="sub-tab" onclick="switchMetierTab('raffinage', this)"><span class="metal-dot"></span>Raffinage</button>
-        <button class="sub-tab" onclick="switchMetierTab('cours', this)">Cours or</button>
-        <button class="sub-tab" onclick="switchMetierTab('caisse', this)">Caisse</button>
-        <button class="sub-tab" onclick="switchMetierTab('atelier', this)">Atelier</button>
+        <button class="sub-tab active" onclick="switchMetierTab('balayures', this)"><span class="metal-dot"></span>♻️ Balayures</button>
+        <button class="sub-tab" onclick="switchMetierTab('raffinage', this)"><span class="metal-dot"></span>⚗️ Raffinage</button>
+        <button class="sub-tab" onclick="switchMetierTab('cours', this)">📈 Cours or</button>
+        <button class="sub-tab" onclick="switchMetierTab('caisse', this)">💰 Caisse</button>
+        <button class="sub-tab" onclick="switchMetierTab('atelier', this)">🏭 Atelier</button>
         <button class="sub-tab" onclick="switchMetierTab('artisans', this)">👷 Artisans</button>
         <button class="sub-tab" onclick="switchMetierTab('tresor', this)">🔐 Coffre</button>
       </div>
