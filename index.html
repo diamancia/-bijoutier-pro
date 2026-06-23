@@ -3161,8 +3161,10 @@ function applyRoleScope(role, artisanId) {
     document.getElementById('nav-dashboard').classList.add('hidden');
     document.getElementById('nav-admin').classList.add('hidden');
     // Base = hub Clients unique (plus de sous-onglets globaux à filtrer ici)
+    // Le chef d'atelier gère aussi le Coffre (réserve d'or, prêts, crédits)
+    const chefMetier = ['Cours or', 'Atelier', 'Coffre'];
     document.querySelectorAll('#tab-metier .sub-tabs .sub-tab').forEach(btn => {
-      btn.classList.toggle('hidden', !['Cours or', 'Atelier'].includes(btn.textContent.trim()));
+      btn.classList.toggle('hidden', !chefMetier.some(k => btn.textContent.includes(k)));
     });
     switchTab('base');
     const atelierBtn = Array.from(document.querySelectorAll('#tab-metier .sub-tab')).find(b => b.textContent.trim() === 'Atelier');
