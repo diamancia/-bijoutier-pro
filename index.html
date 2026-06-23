@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Bijoutier Pro</title>
 <style>
 :root {
@@ -565,6 +565,24 @@ body {
 .caisse-cours-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
 .caisse-cours-val { font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; }
 .caisse-cours-unit { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+
+/* ════════════════════════════════════════════════════════════════
+   PLEIN ÉCRAN MOBILE (pilote téléphone) — placé en fin de feuille
+   pour primer sur les règles de base (même spécificité = ordre source).
+   On retire le cadre "maquette de téléphone" et on occupe tout l'écran.
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--nm-bg); align-items: stretch; }
+  #app { width: 100%; height: 100vh; height: 100dvh; }
+  .phone-shell {
+    width: 100%; height: 100vh; height: 100dvh; min-height: 0;
+    border: none; border-radius: 0; box-shadow: none;
+  }
+  .status-bar { display: none; }   /* fausse barre 9:41 / 5G / batterie = maquette */
+  .content-area { min-height: 0; padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); }
+  .bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
+}
 </style>
 </head>
 <body>
