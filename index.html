@@ -3468,22 +3468,23 @@ function refuserSortieChef(demandeId) {
 function renderArtisanMouvements(artisanId) {
   const detenu = ArtisanService.getSoldeDetenu(artisanId);
   const detEl = document.getElementById('art-det-detenu');
-  detEl.textContent = detenu.toFixed(1) + ' g';
-  detEl.style.color = detenu > 0.05 ? '#ff7a00' : 'var(--olive)';
+  const solde = detenu <= 0.05;
+  // Quand le chef a tout reçu → retour à zéro → "SOLDÉ" (c'est la réception qui solde)
+  detEl.textContent = solde ? 'SOLDÉ ✓' : detenu.toFixed(1) + ' g';
+  detEl.style.color = solde ? 'var(--success)' : '#ff7a00';
   const ledger = ArtisanService.getLedger(artisanId);
   const donne = ledger.filter(m => m.type === 'sortie_coffre_artisan').reduce((s, m) => s + m.poids_g, 0);
   const rendu = ledger.filter(m => m.type === 'entree_coffre_retour_artisan').reduce((s, m) => s + m.poids_g, 0);
-  document.getElementById('art-det-net').innerHTML = `<span style="color:var(--gold);">↑${donne.toFixed(1)}g</span> · <span style="color:var(--success);">↓${rendu.toFixed(1)}g</span>`;
+  document.getElementById('art-det-net').innerHTML = `<span style="color:var(--success);">↑ entrées ${donne.toFixed(1)}g</span> · <span style="color:var(--danger);">↓ sorties ${rendu.toFixed(1)}g</span>`;
   const heure = at => at ? new Date(at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
   const cont = document.getElementById('artisan-ledger-list');
   cont.innerHTML = ledger.length ? ledger.map(m => {
     const entree = m.type === 'sortie_coffre_artisan'; // sort du coffre = ENTRÉE chez l'artisan
-    const lbl = entree ? 'Entrée (or donné)' : 'Sortie (or rendu)';
-    const col = entree ? 'var(--gold)' : 'var(--success)';
-    const signe = entree ? '+' : '−';
+    const lbl = entree ? 'Entrée · or donné' : 'Sortie · or rendu';
+    const col = entree ? 'var(--success)' : 'var(--danger)'; // entrée=vert, sortie=rouge
     return `<div class="depot-row">
-      <div><span class="depot-date">${m.date} ${heure(m.created_at)}</span><br><span style="color:${col};font-weight:500;">${lbl}</span></div>
-      <div class="depot-amount" style="color:${col};">${signe}${m.poids_g}g ${m.purete}</div>
+      <div><span class="depot-date">${m.date} ${heure(m.created_at)}</span><br><span style="color:${col};font-weight:600;">${lbl}</span></div>
+      <div class="depot-amount" style="color:${col};">${m.poids_g}g ${m.purete}</div>
     </div>`;
   }).join('') : '<p class="text-muted">Aucun mouvement</p>';
 }

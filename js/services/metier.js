@@ -1032,9 +1032,10 @@ const ArtisanService = {
 
   // Or actuellement détenu par l'artisan = donné − rendu (en grammes)
   getSoldeDetenu(artisanId) {
-    return BijoutierStore.query('stock_atelier', m =>
+    const solde = BijoutierStore.query('stock_atelier', m =>
       m.artisan_id === artisanId && ['sortie_coffre_artisan', 'entree_coffre_retour_artisan'].includes(m.type))
       .reduce((s, m) => s + (m.type === 'sortie_coffre_artisan' ? m.poids_g : -m.poids_g), 0);
+    return Math.max(0, solde); // ne descend jamais sous zéro
   },
 
   // ── Workflow validation : l'artisan DÉCLARE une sortie, le chef la VALIDE ──
