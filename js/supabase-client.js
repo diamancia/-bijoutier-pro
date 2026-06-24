@@ -55,6 +55,53 @@ async function supabaseHealthCheck() {
   }
 }
 
+// ─── Sync par snapshot : l'état complet de l'app dans une ligne de la table app_state ───
+const APP_STATE_ID = 'main';
+
+// Tire l'état distant. Renvoie { ok, data } : ok=false si la table n'existe pas encore.
+async function cloudPull() {
+  const client = _supabaseClient || initSupabase();
+  if (!client) return { ok: false, data: null };
+  try {
+    const { data, error } = await client.from('app_state').select('data, updated_at').eq('id', APP_STATE_ID).maybeSingle();
+    if (error) return { ok: false, data: null, error: error.message };
+    return { ok: true, data: data ? data.data : null };
+  } catch (e) {
+    return { ok: false, data: null, error: e.message };
+  }
+}
+
+// Pousse l'état complet (upsert). Renvoie true/false, tout est capturé.
+async function cloudPush(stateObj) {
+  const client = _supabaseClient || initSupabase();
+  if (!client) return false;
+  try {
+    const { error } = await client.from('app_state').upsert({
+      id: APP_STATE_ID, data: stateObj, updated_at: new Date().toISOString(),
+    });
+    return !error;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Abonnement temps réel aux changements de l'état partagé.
+function cloudSubscribe(onChange) {
+  const client = _supabaseClient || initSupabase();
+  if (!client) return null;
+  try {
+    return client
+      .channel('app_state_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.' + APP_STATE_ID }, p => {
+        try { onChange && onChange(p); } catch (e) { console.warn('[Supabase] sync handler:', e); }
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn('[Supabase] subscribe app_state impossible:', e.message);
+    return null;
+  }
+}
+
 // Abonnement temps réel aux sorties d'or déclarées par les artisans (table demandes_sortie).
 // No-op silencieux si le client/la table n'existent pas encore. Retourne le channel (ou null).
 function subscribeDemandesSortie(onChange) {

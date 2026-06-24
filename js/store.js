@@ -173,6 +173,7 @@ const BijoutierStore = (() => {
         config: _state.config,
         _lastSaved: new Date().toISOString(),
       };
+      _state._lastSaved = toSave._lastSaved;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch (e) {
       console.error('[Store] Erreur persistance:', e);
@@ -206,6 +207,7 @@ const BijoutierStore = (() => {
       if (data.artisans) _state.artisans = data.artisans;
       if (data.demandesSortie) _state.demandesSortie = data.demandesSortie;
       if (data.config) Object.assign(_state.config, data.config);
+      if (data._lastSaved) _state._lastSaved = data._lastSaved;
 
       console.log('[Store] Données restaurées depuis localStorage');
       return true;
@@ -269,6 +271,50 @@ const BijoutierStore = (() => {
     return flushed;
   }
 
+  // ─── EXPORT / IMPORT ÉTAT COMPLET (pour sync cloud par snapshot) ───
+  function exportState() {
+    return {
+      _schemaVersion: SCHEMA_VERSION,
+      coursOr: _state.coursOr,
+      achatsDivers: _state.achatsDivers,
+      clients: _state.clients,
+      commandes: _state.commandes,
+      stock: _state.stock,
+      balayures: _state.balayures,
+      raffinages: _state.raffinages,
+      caisseSnapshots: _state.caisseSnapshots,
+      articles: _state.articles,
+      pieces: _state.pieces,
+      creditsClient: _state.creditsClient,
+      artisans: _state.artisans,
+      demandesSortie: _state.demandesSortie,
+      config: _state.config,
+      _lastSaved: _state._lastSaved || null,
+    };
+  }
+
+  function importState(data) {
+    if (!data) return false;
+    if (data.coursOr) _state.coursOr = data.coursOr;
+    if (data.achatsDivers) _state.achatsDivers = data.achatsDivers;
+    if (data.clients) _state.clients = data.clients;
+    if (data.commandes) _state.commandes = data.commandes;
+    if (data.stock) _state.stock = data.stock;
+    if (!_state.stock.atelier) _state.stock.atelier = [];
+    if (data.balayures) _state.balayures = data.balayures;
+    if (data.raffinages) _state.raffinages = data.raffinages;
+    if (data.caisseSnapshots) _state.caisseSnapshots = data.caisseSnapshots;
+    if (data.articles) _state.articles = data.articles;
+    if (data.pieces) _state.pieces = data.pieces;
+    if (data.creditsClient) _state.creditsClient = data.creditsClient;
+    if (data.artisans) _state.artisans = data.artisans;
+    if (data.demandesSortie) _state.demandesSortie = data.demandesSortie;
+    if (data.config) Object.assign(_state.config, data.config);
+    _persist();
+    emit('store:imported', {});
+    return true;
+  }
+
   // ─── INITIALISATION ───
   function init(seedData = null) {
     const restored = _restore();
@@ -313,6 +359,8 @@ const BijoutierStore = (() => {
     // Initialisation
     init,
     clearAll,
+    exportState,
+    importState,
 
     // CRUD
     getAll,

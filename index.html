@@ -1800,12 +1800,73 @@ if (typeof initSupabase === 'function') initSupabase();
       console.log('[Supabase] Connecté ✓');
       if (dot) { dot.style.background = '#1a7a4a'; }
       if (label) { label.textContent = 'En ligne'; label.style.color = '#1a7a4a'; }
+      initCloudSync();
     } else {
       console.log('[Supabase] Mode local (hors-ligne) :', res.error);
       if (label) { label.textContent = 'Local'; }
     }
   });
 })();
+
+// ─── Sync cloud par snapshot (multi-appareils + temps réel) ───
+// Dormant tant que la table app_state n'existe pas → 100% local, zéro erreur.
+let _syncApplyingRemote = false;
+let _syncPushTimer = null;
+let _syncReady = false;
+
+function refreshCurrentView() {
+  const safe = fn => { try { fn(); } catch (e) {} };
+  safe(() => renderClientsListe());
+  safe(() => { if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard(); });
+  safe(() => { if (document.getElementById('tab-coffre').classList.contains('active')) renderTresor(); });
+  safe(() => { if (typeof updateChefHomeBadge === 'function') updateChefHomeBadge(); });
+  safe(() => {
+    const a = document.getElementById('met-artisans');
+    if (a && !a.classList.contains('hidden')) {
+      if (typeof _artisanDetailId !== 'undefined' && _artisanDetailId) showArtisanDetail(_artisanDetailId);
+      else renderArtisansListe();
+    }
+  });
+  safe(() => { if (CURRENT_ROLE === 'artisan' && CURRENT_ARTISAN_ID) renderArtisanLedger(CURRENT_ARTISAN_ID); });
+}
+
+async function applyRemoteState() {
+  const r = await cloudPull();
+  if (!r.ok || !r.data) return;
+  _syncApplyingRemote = true;
+  BijoutierStore.importState(r.data);
+  _syncApplyingRemote = false;
+  refreshCurrentView();
+}
+
+async function initCloudSync() {
+  if (typeof cloudPull !== 'function') return;
+  const r = await cloudPull();
+  if (!r.ok) { console.log('[Supabase] Sync inactive (table app_state absente).'); return; }
+  _syncReady = true;
+  const remote = r.data;
+  const local = BijoutierStore.exportState();
+  const remoteSaved = remote && remote._lastSaved;
+  const localSaved = local && local._lastSaved;
+  if (remote && (!localSaved || (remoteSaved && remoteSaved > localSaved))) {
+    _syncApplyingRemote = true;
+    BijoutierStore.importState(remote);
+    _syncApplyingRemote = false;
+    refreshCurrentView();
+    console.log('[Supabase] État distant chargé.');
+  } else {
+    cloudPush(BijoutierStore.exportState());
+    console.log('[Supabase] État local poussé.');
+  }
+  // Temps réel : un autre appareil modifie → on récupère et on rafraîchit
+  cloudSubscribe(() => { if (!_syncApplyingRemote) applyRemoteState(); });
+  // Pousse nos changements locaux (anti-rebond)
+  BijoutierStore.on('state:changed', () => {
+    if (!_syncReady || _syncApplyingRemote) return;
+    clearTimeout(_syncPushTimer);
+    _syncPushTimer = setTimeout(() => cloudPush(BijoutierStore.exportState()), 800);
+  });
+}
 
 // La valorisation "Mon Trésor" se recalcule automatiquement à chaque nouveau cours validé
 BijoutierStore.on('coursOr:added', () => { if (typeof renderTresor === 'function') renderTresor(); });
