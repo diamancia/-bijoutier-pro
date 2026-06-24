@@ -139,13 +139,13 @@ body {
 
 .nm-card {
   background: var(--nm-bg);
-  border-radius: var(--border-r);
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 4px 4px 10px rgba(0,0,0,0.12), -4px -4px 10px rgba(255,255,255,0.7);
+  border-radius: 18px;
+  padding: 15px;
+  margin-bottom: 14px;
+  box-shadow: 7px 7px 18px rgba(0,0,0,0.13), -6px -6px 14px rgba(255,255,255,0.8);
 }
 .dark .nm-card {
-  box-shadow: 4px 4px 10px #0a0908, -4px -4px 10px #2e2b24;
+  box-shadow: 7px 7px 18px #08070a, -6px -6px 14px #2e2b24;
 }
 
 .nm-inset {
@@ -335,23 +335,30 @@ body {
 .bar-topval { font-size: 10px; color: var(--text); font-weight: 600; }
 .bar-pct { font-size: 9px; color: var(--text-muted); }
 
+/* Soft UI : chaque ligne devient une carte "flottante" (relief neumorphique) */
 .client-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px; margin-bottom: 10px;
+  background: var(--nm-bg); border-radius: 16px;
+  box-shadow: 5px 5px 13px rgba(0,0,0,0.12), -5px -5px 12px rgba(255,255,255,0.78);
+  cursor: pointer; transition: box-shadow .15s, transform .12s;
 }
-.dark .client-row { border-bottom-color: rgba(255,255,255,0.06); }
+.client-row:active {
+  transform: scale(0.99);
+  box-shadow: inset 3px 3px 7px rgba(0,0,0,0.13), inset -3px -3px 7px rgba(255,255,255,0.7);
+}
+.dark .client-row { box-shadow: 5px 5px 13px #08070a, -5px -5px 12px #2e2b24; }
+.dark .client-row:active { box-shadow: inset 3px 3px 7px #08070a, inset -3px -3px 7px #2e2b24; }
 
 .client-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 42px; height: 42px; border-radius: 50%;
   background: var(--gold);
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 600; color: #1a1713;
+  font-size: 15px; font-weight: 700; color: #1a1713;
   flex-shrink: 0;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -2px -2px 5px rgba(255,255,255,0.7);
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.18), -2px -2px 6px rgba(255,255,255,0.7);
 }
-.dark .client-avatar { box-shadow: 2px 2px 5px #0a0908, -2px -2px 5px #2e2b24; }
+.dark .client-avatar { box-shadow: 3px 3px 7px #08070a, -2px -2px 6px #2e2b24; }
 
 .client-info { flex: 1; }
 .client-name { font-size: 15px; font-weight: 600; color: var(--text); }
@@ -861,17 +868,26 @@ body {
     <div class="tab-content" id="tab-base">
       <div id="sub-clients">
         <div id="client-list-view">
-          <div class="search-bar nm-inset" style="padding:8px 12px;">
+          <div class="search-bar nm-inset" style="padding:10px 14px;">
             <span style="font-size:16px;color:var(--text-muted);">🔍</span>
             <input class="nm-input" style="box-shadow:none;padding:0;background:transparent;" placeholder="Rechercher client, tél..." id="search-input" oninput="filterClients()">
           </div>
+
+          <p class="section-title" style="margin-top:6px;">📋 Commandes par client</p>
           <div id="clients-list"></div>
-          <div style="margin-top:10px;">
-            <button class="nm-btn nm-btn-gold" style="width:100%;padding:10px;" onclick="showAddClient()">+ Nouveau client</button>
+
+          <div style="margin-top:12px;">
+            <button class="nm-btn nm-btn-gold" style="width:100%;padding:12px;" onclick="showAddClient()">+ Nouveau client</button>
           </div>
           <div style="margin-top:10px;display:flex;gap:10px;">
             <button class="nm-btn nm-btn-green nm-btn-lg" style="flex:1;" onclick="showCamembert()"><span class="btn-ico">📊</span>Part clients</button>
             <button class="nm-btn nm-btn-lg" style="flex:1;border:2px solid var(--olive);" onclick="showAddReparation()"><span class="btn-ico">🔧</span>Réparations</button>
+          </div>
+
+          <!-- Commandes du jour (zone surlignée) -->
+          <div class="nm-card" style="margin-top:14px;">
+            <p class="section-title">🗓️ Commandes du jour <span id="cmd-jour-count" style="float:right;color:var(--gold);"></span></p>
+            <div id="commandes-jour-list"></div>
           </div>
         </div>
 
@@ -2305,23 +2321,61 @@ function clientInitiales(nom) {
   return (nom || '?').split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
 }
 
+function ddmm(d) { return d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '—'; }
+
 function renderClientsListe(filtre) {
   const cont = document.getElementById('clients-list');
+  if (cont) {
+    const list = filtre ? ClientService.rechercher(filtre) : ClientService.getAll();
+    cont.innerHTML = list.length ? list.map(c => {
+      const cmds = ClientService.getCommandes(c.id);
+      const enCours = cmds.filter(x => x.statut === 'en_cours');
+      const dette = CreditService.getSoldeClient(c.id);
+      const detteChip = dette > 0.01 ? `<span class="chip chip-red" style="margin-left:4px;">doit ${dette.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</span>` : '';
+      // Ligne "commande" : nb · grammage · durée dépôt→livraison (de la cmd en cours la plus proche)
+      let ligneCmd;
+      if (enCours.length) {
+        const totalG = enCours.reduce((s, x) => s + (x.poids_or_g || 0), 0);
+        const prochaine = enCours.slice().sort((a, b) => new Date(a.date_livraison_prevue) - new Date(b.date_livraison_prevue))[0];
+        ligneCmd = `<div class="client-meta" style="color:var(--gold);font-weight:600;">${enCours.length} cmd · ${totalG.toFixed(1)}g · 📅 ${ddmm(prochaine.date_depot_or)} → ${ddmm(prochaine.date_livraison_prevue)}</div>`;
+      } else {
+        ligneCmd = `<div class="client-meta">Aucune commande en cours</div>`;
+      }
+      const badge = enCours.length
+        ? `<span class="client-badge">${enCours.length} en cours</span>`
+        : `<span class="chip chip-green">à jour</span>`;
+      return `<div class="client-row" onclick="showClientDetail('${c.id}')">
+        <div class="client-avatar">${clientInitiales(c.nom)}</div>
+        <div class="client-info">
+          <div class="client-name">${c.nom}</div>
+          ${ligneCmd}
+          <div class="client-meta" style="opacity:.8;">${c.telephone || '—'}${c.bijouterie ? ' · ' + c.bijouterie : ''}</div>
+        </div>
+        <div style="text-align:right;">${badge}${detteChip}</div>
+      </div>`;
+    }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun client</p>';
+  }
+  renderCommandesDuJour();
+}
+
+// Commandes du jour : déposées aujourd'hui (zone surlignée)
+function renderCommandesDuJour() {
+  const cont = document.getElementById('commandes-jour-list');
   if (!cont) return;
-  const list = filtre ? ClientService.rechercher(filtre) : ClientService.getAll();
-  cont.innerHTML = list.length ? list.map(c => {
-    const nbCommandes = ClientService.getCommandes(c.id).length;
-    const dette = CreditService.getSoldeClient(c.id);
-    const detteChip = dette > 0.01 ? `<span class="chip chip-red" style="margin-left:4px;">doit ${dette.toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD</span>` : '';
-    return `<div class="client-row" onclick="showClientDetail('${c.id}')">
-      <div class="client-avatar">${clientInitiales(c.nom)}</div>
-      <div class="client-info">
-        <div class="client-name">${c.nom}</div>
-        <div class="client-meta">${c.telephone || ''} · ${c.bijouterie || ''}</div>
-      </div>
-      <div style="text-align:right;"><div class="client-badge">${nbCommandes} cmd${nbCommandes !== 1 ? 's' : ''}</div>${detteChip}</div>
+  const today = new Date().toISOString().split('T')[0];
+  const cmds = BijoutierStore.query('commandes', c =>
+    c.date_depot_or === today || (c.created_at || '').slice(0, 10) === today)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  document.getElementById('cmd-jour-count').textContent = cmds.length ? cmds.length + ' cmd' : '';
+  cont.innerHTML = cmds.length ? cmds.map(c => {
+    const cli = ClientService.getById(c.client_id);
+    const livree = c.statut === 'livree';
+    return `<div class="depot-row" onclick="showCommandeDetail('${c.id}')" style="cursor:pointer;">
+      <div><span class="depot-amount">${cli ? cli.nom : '?'}</span> · ${c.type}<br>
+        <span class="text-muted" style="font-size:11px;">${c.poids_or_g}g · 📅 ${ddmm(c.date_depot_or)} → ${ddmm(c.date_livraison_prevue)}</span></div>
+      <span class="chip ${livree ? 'chip-green' : 'chip-gold'}">${livree ? 'Livrée' : 'En cours'}</span>
     </div>`;
-  }).join('') : '<p class="text-muted" style="text-align:center;padding:16px 0;">Aucun client</p>';
+  }).join('') : '<p class="text-muted" style="text-align:center;padding:8px 0;">Aucune commande aujourd\'hui</p>';
 }
 
 let _clientDetailId = null;
