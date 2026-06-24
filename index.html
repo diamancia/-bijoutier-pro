@@ -399,6 +399,14 @@ body {
 
 .depot-date { color: var(--text-muted); }
 .depot-amount { font-weight: 500; color: var(--text); }
+
+/* Tableau des mouvements artisan : 3 colonnes alignées (Date | Type | Montant) */
+.art-mvt-table { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0 10px; }
+.art-mvt-table > div { border-bottom: 1px solid rgba(0,0,0,0.06); padding: 9px 0; }
+.dark .art-mvt-table > div { border-bottom-color: rgba(255,255,255,0.07); }
+.amc-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.amc-type { font-size: 13px; font-weight: 600; }
+.amc-amt  { font-size: 14px; font-weight: 700; text-align: right; white-space: nowrap; }
 .depot-mad { color: var(--gold); font-weight: 600; }
 
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
@@ -1658,8 +1666,9 @@ body {
           </div>
 
           <div class="nm-card">
-            <p class="section-title">Mouvements (entrées / sorties) <span id="art-det-net" style="float:right;"></span></p>
-            <div id="artisan-ledger-list"></div>
+            <p class="section-title">Mouvements (entrées / sorties)</p>
+            <div id="art-det-net"></div>
+            <div id="artisan-ledger-list" class="art-mvt-table"></div>
           </div>
         </div>
       </div>
@@ -3475,18 +3484,24 @@ function renderArtisanMouvements(artisanId) {
   const ledger = ArtisanService.getLedger(artisanId);
   const donne = ledger.filter(m => m.type === 'sortie_coffre_artisan').reduce((s, m) => s + m.poids_g, 0);
   const rendu = ledger.filter(m => m.type === 'entree_coffre_retour_artisan').reduce((s, m) => s + m.poids_g, 0);
-  document.getElementById('art-det-net').innerHTML = `<span style="color:var(--success);">↑ entrées ${donne.toFixed(1)}g</span> · <span style="color:var(--danger);">↓ sorties ${rendu.toFixed(1)}g</span>`;
+  const reste = Math.max(0, donne - rendu);
+  // Totaux dans un tableau : Entrées | Sorties | Reste
+  document.getElementById('art-det-net').innerHTML = `
+    <div class="stat-row" style="grid-template-columns:1fr 1fr 1fr;margin:4px 0 8px;">
+      <div class="stat-box"><div class="stat-val" style="color:var(--success);font-size:16px;">${donne.toFixed(1)}g</div><div class="stat-lbl">Entrées</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--danger);font-size:16px;">${rendu.toFixed(1)}g</div><div class="stat-lbl">Sorties</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:${solde ? 'var(--success)' : '#ff7a00'};font-size:16px;">${solde ? 'SOLDÉ' : reste.toFixed(1) + 'g'}</div><div class="stat-lbl">Reste</div></div>
+    </div>`;
   const heure = at => at ? new Date(at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
   const cont = document.getElementById('artisan-ledger-list');
   cont.innerHTML = ledger.length ? ledger.map(m => {
     const entree = m.type === 'sortie_coffre_artisan'; // sort du coffre = ENTRÉE chez l'artisan
     const lbl = entree ? 'Entrée · or donné' : 'Sortie · or rendu';
     const col = entree ? 'var(--success)' : 'var(--danger)'; // entrée=vert, sortie=rouge
-    return `<div class="depot-row">
-      <div><span class="depot-date">${m.date} ${heure(m.created_at)}</span><br><span style="color:${col};font-weight:600;">${lbl}</span></div>
-      <div class="depot-amount" style="color:${col};">${m.poids_g}g ${m.purete}</div>
-    </div>`;
-  }).join('') : '<p class="text-muted">Aucun mouvement</p>';
+    return `<div class="amc-date">${m.date}<br>${heure(m.created_at)}</div>
+      <div class="amc-type" style="color:${col};">${lbl}</div>
+      <div class="amc-amt" style="color:${col};">${m.poids_g}g ${m.purete}</div>`;
+  }).join('') : '<p class="text-muted" style="grid-column:1/4;">Aucun mouvement</p>';
 }
 
 function showArtisanAction(action) {
